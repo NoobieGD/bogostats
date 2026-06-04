@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bogostats beta-v1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b0d10;
+      --panel:#11151b;
+      --panel-2:#0f1318;
+      --text:#e8edf2;
+      --muted:#8d98a6;
+      --line:rgba(255,255,255,.08);
+      --good:#86efac;
+      --bad:#fda4af;
+      --shadow:0 18px 40px rgba(0,0,0,.35);
+      --radius:18px;
+      --ease:cubic-bezier(.2,.9,.2,1);
+      --digit-h:1em;
+      --digit-w:.58em;
+      text-rendering:geometricPrecision;
+    }
+    *{box-sizing:border-box}
+    html,body{
+      height:100%;
+      margin:0;
+      background:
+        radial-gradient(1200px 700px at 15% 0%, rgba(125,211,252,.08), transparent 50%),
+        radial-gradient(900px 600px at 90% 10%, rgba(134,239,172,.05), transparent 45%),
+        linear-gradient(180deg,#07090c 0%,var(--bg) 100%);
+      color:var(--text);
+      font-family:Roboto,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    }
+    body{min-height:100%;padding:24px}
+    .shell{max-width:1400px;margin:0 auto;display:grid;gap:16px}
+    .topbar{display:flex;align-items:end;justify-content:space-between;gap:16px;padding:6px 2px}
+    .brand h1{margin:0;font-size:clamp(28px,3vw,44px);letter-spacing:-.05em;line-height:1;font-weight:800}
+    .brand p{margin:10px 0 0;color:var(--muted);font-size:14px}
+    .status-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+    .req-rate{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+    .status{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;white-space:nowrap}
+    .dot{width:10px;height:10px;border-radius:999px;background:#64748b;box-shadow:0 0 0 4px rgba(100,116,139,.15);flex:0 0 auto}
+    .dot.ok{background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.15)}
+    .dot.warn{background:#f59e0b;box-shadow:0 0 0 4px rgba(245,158,11,.15)}
+    .dot.bad{background:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.15)}
+    .grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 34%),var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+    .card-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px 0}
+    .card h2{margin:0;font-size:15px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);font-weight:700}
+    .subtle{color:var(--muted);font-size:12px}
+    .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;padding:16px 18px 18px}
+    .metric{border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.015);border-radius:14px;padding:14px;min-height:108px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+    .metric .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .metric .value{font-size:clamp(15px,1.8vw,32px);font-weight:800;letter-spacing:-.06em;line-height:1;margin-top:8px;min-width:0;white-space:nowrap;overflow:hidden;max-width:100%}
+    .metric .delta{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:6px}
+    .main{grid-column:span 8}
+    .side{grid-column:span 4}
+    .panel-body{padding:16px 18px 18px}
+    .tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+    .tab{border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:999px;padding:9px 13px;cursor:pointer;font:inherit;font-size:13px;transition:border-color .15s var(--ease),background .15s var(--ease)}
+    .tab:hover{border-color:rgba(125,211,252,.4)}
+    .tab.active{border-color:rgba(125,211,252,.7);background:rgba(125,211,252,.12)}
+    .controls{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+    .search{display:flex;align-items:center;gap:10px;background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-width:min(100%,360px);flex:1 1 360px}
+    .search input{width:100%;border:0;outline:none;background:transparent;color:var(--text);font-size:14px;font-family:inherit}
+    .btn{border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:14px;padding:10px 14px;cursor:pointer;transition:border-color .15s var(--ease),background .15s var(--ease);font:inherit;font-size:13px}
+    .btn:hover{border-color:rgba(125,211,252,.4)}
+    .list-wrap{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:rgba(255,255,255,.02)}
+    .list-head,.list-row{display:grid;grid-template-columns:64px 1.8fr 1.1fr 1fr;gap:12px;align-items:center}
+    .list-head{padding:13px 14px;font-size:12px;color:var(--muted);background:rgba(255,255,255,.03);border-bottom:1px solid var(--line);text-transform:uppercase;letter-spacing:.05em;position:sticky;top:0;z-index:1}
+    .list-rows{max-height:70vh;overflow:auto}
+    .list-row{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.05);font-size:14px}
+    .list-row:last-child{border-bottom:0}
+    .list-row:hover{background:rgba(255,255,255,.03)}
+    .rank{color:var(--muted);font-variant-numeric:tabular-nums}
+    .player-cell{display:flex;flex-direction:column;gap:7px;min-width:0}
+    .nickname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+    .username-fallback{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .badge-list{display:flex;flex-wrap:wrap;gap:6px}
+    .badge-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;line-height:1;padding:6px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:#d7e0ea;white-space:nowrap}
+    .mono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1,"lnum" 1;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .mini-stats{display:grid;gap:12px}
+    .mini{border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:16px;padding:14px}
+    .mini .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .mini .v{margin-top:8px;font-size:clamp(16px,1.6vw,22px);font-weight:800;letter-spacing:-.05em;word-break:break-word;overflow:hidden;white-space:nowrap}
+    .mini .s{margin-top:6px;color:var(--muted);font-size:13px}
+    .live-number{display:inline-flex;align-items:baseline;gap:0;overflow:hidden;white-space:nowrap;max-width:100%}
+    .live-chunk{display:inline-block}
+    .digit{display:inline-block;width:var(--digit-w);height:var(--digit-h);overflow:hidden;position:relative;vertical-align:baseline;flex:0 0 auto}
+    .digit-track{position:absolute;left:0;top:0;width:100%;will-change:transform;transform:translateY(calc(var(--digit-h) * -10));transition:transform 750ms var(--ease)}
+    .digit-track span{display:block;width:100%;height:var(--digit-h);line-height:var(--digit-h);text-align:center;font-variant-numeric:tabular-nums}
+    .sep{display:inline-block;padding:0 .01em}
+    .loading,.empty,.error{padding:18px;color:var(--muted);font-size:14px}
+    .footer-note{padding:0 2px 10px;color:var(--muted);font-size:12px}
+
+    .top-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    .toggle-btn{
+      display:inline-flex;align-items:center;gap:10px;
+      border:1px solid var(--line);background:var(--panel-2);color:var(--text);
+      border-radius:999px;padding:10px 12px;cursor:pointer;font:inherit;font-size:13px;
+      transition:border-color .15s var(--ease),background .15s var(--ease),transform .15s var(--ease);
+      user-select:none;
+    }
+    .toggle-btn:hover{border-color:rgba(125,211,252,.4);transform:translateY(-1px)}
+    .toggle-btn .switch{
+      width:42px;height:24px;border-radius:999px;background:rgba(255,255,255,.08);
+      position:relative;flex:0 0 auto;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
+      transition:background .15s var(--ease);
+    }
+    .toggle-btn .switch::after{
+      content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
+      background:var(--text);transition:transform .2s var(--ease),background .2s var(--ease);
+      box-shadow:0 2px 8px rgba(0,0,0,.35);
+    }
+    .toggle-btn.on .switch{background:rgba(34,197,94,.28)}
+    .toggle-btn.on .switch::after{transform:translateX(18px);background:#eaffef}
+    .toggle-label{letter-spacing:.03em}
+    .animations-off .digit-track{transition:none !important}
+    .animations-off .list-row{transition:none !important}
+    .view-panel{margin-top:14px}
+    .stats-view{display:grid;gap:14px}
+    .stats-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .array-card{
+      border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:16px;padding:14px;
+    }
+    .array-wrap{
+      margin-top:10px;
+      display:grid;
+      grid-template-columns:repeat(25,minmax(0,1fr));
+      gap:4px;
+      align-items:end;
+      min-height:260px;
+      padding:10px 6px 2px;
+      border-radius:14px;
+      background:linear-gradient(180deg,rgba(255,255,255,.02),transparent);
+      border:1px solid rgba(255,255,255,.06);
+      overflow:hidden;
+    }
+    .array-bar{
+      position:relative;
+      height:100%;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      min-width:0;
+    }
+    .array-bar .bar{
+      width:100%;
+      border-radius:10px 10px 4px 4px;
+      background:rgba(255,255,255,.12);
+      height:4%;
+      min-height:8px;
+      transition:height .25s var(--ease),background .25s var(--ease),transform .25s var(--ease);
+      position:relative;
+      overflow:hidden;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+    .array-bar.correct .bar{background:rgba(34,197,94,.85)}
+    .array-bar.incorrect .bar{background:rgba(249,115,22,.85)}
+    .array-bar .num{
+      position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
+      font-size:11px;font-variant-numeric:tabular-nums;line-height:1;
+      color:#f7fafc;text-shadow:0 1px 3px rgba(0,0,0,.55);
+      z-index:1;pointer-events:none;white-space:nowrap;
+    }
+    .stats-note{color:var(--muted);font-size:12px;margin-top:6px}
+    @media (max-width:900px){
+      .stats-summary{grid-template-columns:repeat(1,minmax(0,1fr))}
+      .array-wrap{grid-template-columns:repeat(10,minmax(0,1fr));min-height:340px}
+    }
+
+    @media (max-width:1280px){
+      .metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+      .metric .value{font-size:clamp(13px,1.5vw,28px)}
+    }
+    @media (max-width:1100px){
+      .main,.side{grid-column:span 12}
+      .metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+    }
+    @media (max-width:820px){
+      .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .metric .value{font-size:clamp(15px,3.5vw,28px)}
+      .list-head,.list-row{grid-template-columns:50px 1.6fr 1fr .9fr}
+    }
+    @media (max-width:760px){
+      body{padding:14px}
+      .topbar{align-items:start;flex-direction:column}
+      .search{min-width:100%;flex-basis:100%}
+      .metric{min-height:90px}
+    }
+    @media (max-width:500px){
+      .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .metric .value{font-size:clamp(13px,4vw,22px)}
+      .list-head,.list-row{grid-template-columns:42px 1.4fr 1fr}
+      .hide-sm{display:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">
+        <h1>bogostats beta-v1</h1>
+        <p>25 elements, being checked by an api and websocket.</p>
+      </div>
+      <div class="top-actions">
+        <button class="toggle-btn on" id="animToggle" type="button" aria-pressed="true">
+          <span class="switch" aria-hidden="true"></span>
+          <span class="toggle-label" id="animToggleLabel">Animations on</span>
+        </button>
+        <div class="status-wrap">
+          <span class="req-rate" id="reqRate">0 req/s</span>
+          <div class="status">
+            <span class="dot" id="connDot"></span>
+            <span id="connText">Connecting…</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="card-header">
+        <h2>Live summary</h2>
+        <span class="badge" id="lastUpdated">Waiting for data…</span>
+      </div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="label">Total contributors</div>
+          <div class="value"><span class="live-number" id="metricRows">0</span></div>
+          <div class="delta" id="metricRowsDelta">Unique participants in the board</div>
+        </div>
+        <div class="metric">
+          <div class="label">API Shuffles</div>
+          <div class="value"><span class="live-number" id="metricApiTotal">0</span></div>
+          <div class="delta" id="metricApiDelta">Total shuffles across visible rows</div>
+        </div>
+        <div class="metric">
+          <div class="label">Top Shuffles</div>
+          <div class="value"><span class="live-number" id="metricTop">0</span></div>
+          <div class="delta" id="metricTopDelta">Highest entry in the board</div>
+        </div>
+        <div class="metric">
+          <div class="label">API average</div>
+          <div class="value"><span class="live-number" id="metricAvg">0</span></div>
+          <div class="delta" id="metricAvgDelta">Average shuffles across visible rows</div>
+        </div>
+        <div class="metric">
+          <div class="label">Websocket Shuffles</div>
+          <div class="value"><span class="live-number" id="metricWs">0</span></div>
+          <div class="delta" id="metricWsDelta">total_crowd from the websocket</div>
+        </div>
+        <div class="metric">
+          <div class="label">Comparisons</div>
+          <div class="value"><span class="live-number" id="metricComparisons">0</span></div>
+          <div class="delta" id="metricComparisonsDelta">Websocket shuffles × 25</div>
+        </div>
+        <div class="metric">
+          <div class="label">Current shuffles/sec</div>
+          <div class="value"><span class="live-number" id="metricWsRate">0</span></div>
+          <div class="delta" id="metricWsRateDelta">Live rate from websocket delta</div>
+        </div>
+        <div class="metric">
+          <div class="label">Peak shuffles/sec</div>
+          <div class="value"><span class="live-number" id="metricPeakRate">0</span></div>
+          <div class="delta" id="metricPeakRateDelta">Highest rate this session</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card main">
+        <div class="card-header">
+          <h2>Leaderboard</h2>
+          <span class="subtle" id="leaderboardMeta">0 entries</span>
+        </div>
+        <div class="panel-body">
+          <div class="tabs">
+            <button class="tab active" id="tabScore">By shuffles</button>
+            <button class="tab" id="tabShuffles">By shuffles/sec</button>
+            <button class="tab" id="tabBestArray">Best array this second</button>
+          </div>
+          <div class="controls" id="leaderboardControls">
+            <div class="search">
+              <span class="subtle">Search</span>
+              <input id="searchInput" type="text" placeholder="Filter by nickname, username, id, shuffles…" autocomplete="off" />
+            </div>
+            <button class="btn" id="refreshBtn">Refresh</button>
+          </div>
+
+          <div class="view-panel" id="statsPanel" hidden>
+            <div class="stats-view">
+              <div class="stats-summary">
+                <div class="mini">
+                  <div class="k">Best this second</div>
+                  <div class="v" id="statsBestTick">0</div>
+                  <div class="s">combined_tick.best from the stats API</div>
+                </div>
+                <div class="mini">
+                  <div class="k">Record</div>
+                  <div class="v" id="statsRecord">0</div>
+                  <div class="s">Best run so far</div>
+                </div>
+                <div class="mini">
+                  <div class="k">Record holder</div>
+                  <div class="v" id="statsRecordHolder">Unknown</div>
+                  <div class="s">Nickname in record_holder</div>
+                </div>
+              </div>
+              <div class="array-card">
+                <div class="card-header" style="padding:0 0 8px 0;">
+                  <h2>Array visualization</h2>
+                  <span class="subtle" id="statsArrayMeta">Waiting for stats…</span>
+                </div>
+                <div class="array-wrap" id="bestArrayWrap"></div>
+                <div class="stats-note">Green means the value is already in the right position. Orange means it is not.</div>
+              </div>
+            </div>
+          </div>
+          <div class="list-wrap" id="leaderboardWrap">
+
+            <div class="list-head">
+              <div>#</div>
+              <div>Player</div>
+              <div class="mono">Shuffles</div>
+              <div class="mono hide-sm">Shuffles/s</div>
+            </div>
+            <div class="list-rows" id="leaderboardRows">
+              <div class="loading">Loading leaderboard…</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card side">
+        <div class="card-header">
+          <h2>Other stats</h2>
+          <span class="subtle">Computed live</span>
+        </div>
+        <div class="panel-body mini-stats">
+          <div class="mini">
+            <div class="k">Active rate rows</div>
+            <div class="v" id="miniActive">0</div>
+            <div class="s">Entries with a live shuffle rate</div>
+          </div>
+          <div class="mini">
+            <div class="k">Fastest shuffle/sec</div>
+            <div class="v" id="miniFastest">0</div>
+            <div class="s">Highest live rate in view</div>
+          </div>
+          <div class="mini">
+            <div class="k">Median shuffle/sec</div>
+            <div class="v" id="miniMedian">0</div>
+            <div class="s">Middle rate among active rows</div>
+          </div>
+          <div class="mini">
+            <div class="k">Top 10 share</div>
+            <div class="v" id="miniTopShare">0%</div>
+            <div class="s">Share of shuffles held by the top 10</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="footer-note">Values are absolute whole numbers. Shuffles/sec derived from websocket delta.</div>
+  </div>
+
+  <script>
+    const WS_URL = 'wss://bogo.swapjs.dev/ws';
+    const API_URL = 'https://bogo.swapjs.dev/api/leaderboard?limit=1000';
+    const STATS_URL = 'https://bogo.swapjs.dev/api/stats';
+
+    const state = {
+      animations: true,
+      stats: null,
+      rows: [],
+      filtered: [],
+      view: 'score',
+      wsValue: 0,
+      wsConnected: false,
+      lastUpdate: null,
+      lastDataTime: 0,
+      wsSocket: null,
+      pollTimer: null,
+      reconnectTimer: null,
+      reconnectAttempts: 0,
+      search: '',
+      wsSamples: [],
+      rowHistory: new Map(),
+      wsManualClose: false,
+      heartbeatTimer: null,
+      wsConnectTime: 0,
+      peakShuffleRate: 0,
+      reqWindow: [],
+      reqPerSec: 0,
+      lastLeaderboardFetch: null
+    };
+
+    const els = {
+      connDot:              document.getElementById('connDot'),
+      connText:             document.getElementById('connText'),
+      reqRate:              document.getElementById('reqRate'),
+      lastUpdated:          document.getElementById('lastUpdated'),
+      metricRows:           document.getElementById('metricRows'),
+      metricApiTotal:       document.getElementById('metricApiTotal'),
+      metricTop:            document.getElementById('metricTop'),
+      metricAvg:            document.getElementById('metricAvg'),
+      metricWs:             document.getElementById('metricWs'),
+      metricComparisons:    document.getElementById('metricComparisons'),
+      metricWsRate:         document.getElementById('metricWsRate'),
+      metricPeakRate:       document.getElementById('metricPeakRate'),
+      metricRowsDelta:      document.getElementById('metricRowsDelta'),
+      metricApiDelta:       document.getElementById('metricApiDelta'),
+      metricTopDelta:       document.getElementById('metricTopDelta'),
+      metricAvgDelta:       document.getElementById('metricAvgDelta'),
+      metricWsDelta:        document.getElementById('metricWsDelta'),
+      metricComparisonsDelta: document.getElementById('metricComparisonsDelta'),
+      metricWsRateDelta:    document.getElementById('metricWsRateDelta'),
+      metricPeakRateDelta:  document.getElementById('metricPeakRateDelta'),
+      leaderboardMeta:      document.getElementById('leaderboardMeta'),
+      leaderboardRows:      document.getElementById('leaderboardRows'),
+      searchInput:          document.getElementById('searchInput'),
+      refreshBtn:           document.getElementById('refreshBtn'),
+      miniActive:           document.getElementById('miniActive'),
+      miniFastest:          document.getElementById('miniFastest'),
+      miniMedian:           document.getElementById('miniMedian'),
+      miniTopShare:         document.getElementById('miniTopShare'),
+      tabScore:             document.getElementById('tabScore'),
+      tabShuffles:          document.getElementById('tabShuffles'),
+      tabBestArray:         document.getElementById('tabBestArray'),
+      animToggle:           document.getElementById('animToggle'),
+      animToggleLabel:      document.getElementById('animToggleLabel'),
+      statsPanel:           document.getElementById('statsPanel'),
+      leaderboardWrap:      document.getElementById('leaderboardWrap'),
+      statsBestTick:        document.getElementById('statsBestTick'),
+      statsRecord:          document.getElementById('statsRecord'),
+      statsRecordHolder:    document.getElementById('statsRecordHolder'),
+      statsArrayMeta:       document.getElementById('statsArrayMeta'),
+      bestArrayWrap:        document.getElementById('bestArrayWrap')
+    };
+
+    /* ── request tracking ──────────────────────────────────────── */
+    function trackRequest() {
+      state.reqWindow.push(Date.now());
+    }
+
+    function tickReqRate() {
+      const cutoff = Date.now() - 1000;
+      state.reqWindow = state.reqWindow.filter(t => t > cutoff);
+      state.reqPerSec = state.reqWindow.length;
+      els.reqRate.textContent = `${state.reqPerSec} req/s`;
+    }
+
+    /* ── utilities ─────────────────────────────────────────────── */
+    function nowText() {
+      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function setConnection(status, text) {
+      els.connDot.className = 'dot ' + status;
+      els.connText.textContent = text;
+    }
+
+    function setAnimationsEnabled(on) {
+      state.animations = !!on;
+      document.body.classList.toggle('animations-off', !state.animations);
+      els.animToggle.classList.toggle('on', state.animations);
+      els.animToggle.setAttribute('aria-pressed', String(state.animations));
+      els.animToggleLabel.textContent = state.animations ? 'Animations on' : 'Animations off';
+    }
+
+    function updateConnectionDisplay() {
+      const dataAge = Date.now() - state.lastDataTime;
+      if (state.wsConnected || dataAge < 5000) {
+        setConnection('ok', 'Live');
+      } else if (dataAge < 20000) {
+        setConnection('warn', 'Reconnecting…');
+      } else {
+        setConnection('bad', 'Disconnected');
+      }
+    }
+
+    function absInt(value) {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return 0;
+      return Math.abs(Math.trunc(n));
+    }
+
+    function firstNumericDeep(value, depth = 0) {
+      if (depth > 5 || value === null || value === undefined) return null;
+      if (typeof value === 'number' && Number.isFinite(value)) return value;
+      if (typeof value === 'string') {
+        const n = Number(value.replace(/[^0-9.-]/g, ''));
+        return Number.isFinite(n) ? n : null;
+      }
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          const n = firstNumericDeep(item, depth + 1);
+          if (n !== null) return n;
+        }
+        return null;
+      }
+      if (typeof value === 'object') {
+        const preferred = ['total_crowd', 'value', 'count', 'score', 'total', 'users', 'online', 'connections', 'amount', 'shuffles', 'rate', 'delta'];
+        for (const key of preferred) {
+          if (value[key] !== undefined) {
+            const n = firstNumericDeep(value[key], depth + 1);
+            if (n !== null) return n;
+          }
+        }
+        for (const v of Object.values(value)) {
+          const n = firstNumericDeep(v, depth + 1);
+          if (n !== null) return n;
+        }
+      }
+      return null;
+    }
+
+    function stableKey(row, index) {
+      const candidates = [row.id, row.userId, row.uid, row.nickname, row.username, row.name, row.handle, row.player, row.address, row.wallet];
+      for (const c of candidates) {
+        if (c !== undefined && c !== null && String(c).trim() !== '') return String(c).trim().toLowerCase();
+      }
+      return `row-${index}`;
+    }
+
+    function extractUsername(row) {
+      return String(row.username ?? row.user ?? row.handle ?? row.player ?? row.name ?? row.id ?? row.wallet ?? 'Unknown');
+    }
+
+    function extractNickname(row) {
+      const paths = [row.nickname, row.profile && row.profile.nickname, row.user && row.user.nickname, row.member && row.member.nickname, row.displayName, row.display_name];
+      for (const value of paths) {
+        if (value !== undefined && value !== null && String(value).trim() !== '') return String(value);
+      }
+      return extractUsername(row);
+    }
+
+    function extractScore(row) {
+      const keys = ['score', 'points', 'value', 'amount', 'total', 'count', 'wins', 'rating', 'xp'];
+      for (const k of keys) if (k in row) return absInt(row[k]);
+      return 0;
+    }
+
+    function normalizeBadgeValue(b) {
+      if (b === null || b === undefined) return '';
+      if (typeof b === 'string' || typeof b === 'number') return String(b).trim();
+      if (typeof b === 'object') return String(b.label ?? b.name ?? b.text ?? b.title ?? b.id ?? '').trim();
+      return '';
+    }
+
+    function extractBadges(row) {
+      const candidates = [row.badges, row.badge, row.badgeNames, row.roles, row.labels, row.achievements];
+      for (const value of candidates) {
+        if (!value) continue;
+        if (Array.isArray(value)) {
+          const out = value.map(normalizeBadgeValue).filter(Boolean);
+          if (out.length) return out;
+        } else if (typeof value === 'string') {
+          const out = value.split(/[,|]/g).map(s => s.trim()).filter(Boolean);
+          if (out.length) return out;
+        } else if (typeof value === 'object') {
+          const single = normalizeBadgeValue(value);
+          if (single) return [single];
+        }
+      }
+      return [];
+    }
+
+    function normalizeLeaderboard(payload) {
+      let rows = [];
+      if (Array.isArray(payload)) {
+        rows = payload;
+      } else if (payload && typeof payload === 'object') {
+        const candidates = ['data', 'leaderboard', 'rows', 'items', 'results', 'entries'];
+        for (const k of candidates) {
+          if (Array.isArray(payload[k])) { rows = payload[k]; break; }
+        }
+        if (!rows.length) rows = Object.values(payload).find(v => Array.isArray(v)) || [];
+      }
+
+      const map = new Map();
+      rows.forEach((row, index) => {
+        if (!row || typeof row !== 'object') return;
+        const key = stableKey(row, index);
+        if (!map.has(key)) {
+          map.set(key, { ...row });
+          return;
+        }
+        const existing = map.get(key);
+        for (const [k, v] of Object.entries(row)) {
+          if (existing[k] === undefined || existing[k] === null || existing[k] === '') existing[k] = v;
+        }
+        const mergedBadges = [...new Set([...(extractBadges(existing)), ...(extractBadges(row))])];
+        if (mergedBadges.length) existing.badges = mergedBadges;
+      });
+
+      return [...map.values()].map((row, index) => ({
+        __index: index,
+        __key: stableKey(row, index),
+        __nickname: extractNickname(row),
+        __username: extractUsername(row),
+        __score: extractScore(row),
+        __badges: extractBadges(row),
+        __shuffleRate: 0
+      })).sort((a, b) => b.__score - a.__score || a.__nickname.localeCompare(b.__nickname));
+    }
+
+    function formatAbsInt(n) {
+      return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(absInt(n));
+    }
+
+    function sumApiValue(rows) {
+      return rows.reduce((sum, row) => sum + absInt(row.__score), 0);
+    }
+
+    function topScore(rows) {
+      return rows.length ? absInt(rows[0].__score) : 0;
+    }
+
+    function averageApiValue(rows) {
+      return rows.length ? Math.floor(sumApiValue(rows) / rows.length) : 0;
+    }
+
+    function averageShuffleRate(rows) {
+      const rates = rows.map(row => rowShufflePerSecond(row)).filter(rate => rate > 0);
+      return rates.length ? Math.floor(rates.reduce((a, b) => a + b, 0) / rates.length) : 0;
+    }
+
+    function medianShuffleRate(rows) {
+      const rates = rows.map(row => rowShufflePerSecond(row)).filter(rate => rate > 0).sort((a, b) => a - b);
+      if (!rates.length) return 0;
+      const mid = Math.floor(rates.length / 2);
+      return rates.length % 2 ? rates[mid] : Math.floor((rates[mid - 1] + rates[mid]) / 2);
+    }
+
+    function topTenShare(rows) {
+      if (!rows.length) return 0;
+      const sorted = [...rows].sort((a, b) => b.__score - a.__score);
+      const total = sorted.reduce((sum, row) => sum + absInt(row.__score), 0);
+      if (!total) return 0;
+      const top10 = sorted.slice(0, 10).reduce((sum, row) => sum + absInt(row.__score), 0);
+      return Math.round((top10 / total) * 100);
+    }
+
+    function leaderboardGap(rows, mode) {
+      if (!rows.length) return 0;
+      const values = mode === 'shuffle'
+        ? rows.map(row => rowShufflePerSecond(row)).sort((a, b) => b - a)
+        : rows.map(row => absInt(row.__score)).sort((a, b) => b - a);
+      if (values.length < 2) return values[0] || 0;
+      return Math.max(0, values[0] - values[values.length - 1]);
+    }
+
+
+    function normalizeStats(payload) {
+      if (!payload || typeof payload !== 'object') return null;
+      const bestArr = payload?.combined_tick?.best_arr || payload?.engine?.tick_best_arr || [];
+      return {
+        bestTick: absInt(payload?.combined_tick?.best ?? payload?.engine?.best ?? 0),
+        record: absInt(payload?.record ?? 0),
+        recordHolder: String(payload?.record_holder?.nickname ?? 'Unknown'),
+        bestArr: Array.isArray(bestArr) ? bestArr.map(v => absInt(v)).filter(Boolean) : []
+      };
+    }
+
+    function renderStats() {
+      const stats = state.stats;
+      if (!stats) {
+        els.statsBestTick.textContent = '0';
+        els.statsRecord.textContent = '0';
+        els.statsRecordHolder.textContent = 'Unknown';
+        els.statsArrayMeta.textContent = 'Waiting for stats…';
+        els.bestArrayWrap.innerHTML = '';
+        return;
+      }
+
+      els.statsBestTick.textContent = formatAbsInt(stats.bestTick);
+      els.statsRecord.textContent = formatAbsInt(stats.record);
+      els.statsRecordHolder.textContent = stats.recordHolder || 'Unknown';
+      els.statsArrayMeta.textContent = `${formatAbsInt(stats.bestArr.length)} slots`;
+
+      const maxValue = Math.max(25, ...stats.bestArr, 1);
+      els.bestArrayWrap.innerHTML = stats.bestArr.map((value, index) => {
+        const correct = value === index + 1;
+        const cls = correct ? 'correct' : 'incorrect';
+        const height = Math.max(8, Math.round((value / maxValue) * 100));
+        return `
+          <div class="array-bar ${cls}" title="Position ${index + 1}, value ${value}">
+            <span class="num">${value}</span>
+            <div class="bar" style="height:${height}%;"></div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function getWsCurrent() {
+      return state.wsSamples.length ? absInt(state.wsSamples[state.wsSamples.length - 1].value) : 0;
+    }
+
+    function getWsRate() {
+      if (state.wsSamples.length < 2) return 0;
+      const a = state.wsSamples[state.wsSamples.length - 2];
+      const b = state.wsSamples[state.wsSamples.length - 1];
+      const dt = (b.time - a.time) / 1000;
+      if (!dt || dt <= 0) return 0;
+      return Math.abs((b.value - a.value) / dt);
+    }
+
+    function updateRowHistory(rows) {
+      const now = Date.now();
+      for (const row of rows) {
+        const key = `${row.__nickname}|${row.__username}`;
+        const prev = state.rowHistory.get(key);
+        if (prev) {
+          const dt = (now - prev.time) / 1000;
+          row.__shuffleRate = dt > 0 ? Math.abs((prev.score - row.__score) / dt) : 0;
+        } else {
+          row.__shuffleRate = 0;
+        }
+        state.rowHistory.set(key, { time: now, score: row.__score });
+      }
+    }
+
+    function updateSummary() {
+      const rows = state.filtered;
+      const uniqueCount = state.rows.length;
+      const apiTotal = sumApiValue(rows);
+      const apiTop = topScore(state.rows);
+      const apiAvg = state.view === 'shuffle' ? averageShuffleRate(rows) : averageApiValue(rows);
+      const wsVal = getWsCurrent();
+      const wsRate = getWsRate();
+
+      if (wsRate > state.peakShuffleRate) state.peakShuffleRate = wsRate;
+
+      animateValue(els.metricRows, uniqueCount);
+      animateValue(els.metricApiTotal, apiTotal);
+      animateValue(els.metricTop, apiTop);
+      animateValue(els.metricAvg, apiAvg);
+      animateValue(els.metricWs, wsVal);
+      animateValue(els.metricComparisons, wsVal * 25);
+      animateValue(els.metricWsRate, Math.round(wsRate));
+      animateValue(els.metricPeakRate, Math.round(state.peakShuffleRate));
+
+      els.metricRowsDelta.textContent = `${formatAbsInt(uniqueCount)} unique participants`;
+      els.metricApiDelta.textContent = `${formatAbsInt(apiTotal)} total shuffles visible`;
+      els.metricTopDelta.textContent = rows.length ? `Leader: ${rows[0].__nickname}` : 'No entries available';
+      els.metricAvgDelta.textContent = state.view === 'shuffle'
+        ? `${formatAbsInt(apiAvg)} avg shuffles/sec across visible rows`
+        : `${formatAbsInt(apiAvg)} avg shuffles across visible rows`;
+      els.metricWsDelta.textContent = `total_crowd from websocket`;
+      els.metricComparisonsDelta.textContent = `${formatAbsInt(wsVal)} × 25`;
+      els.metricWsRateDelta.textContent = `Live websocket delta/s`;
+      els.metricPeakRateDelta.textContent = `Session high`;
+
+      els.miniActive.textContent = formatAbsInt(rows.filter(row => rowShufflePerSecond(row) > 0).length);
+      els.miniFastest.textContent = formatAbsInt(rows.reduce((max, row) => Math.max(max, rowShufflePerSecond(row)), 0));
+      els.miniMedian.textContent = formatAbsInt(medianShuffleRate(rows));
+      els.miniTopShare.textContent = `${formatAbsInt(topTenShare(rows))}%`;
+      els.leaderboardMeta.textContent = `${formatAbsInt(rows.length)} entries shown`;
+      els.lastUpdated.textContent = state.lastUpdate ? `Updated ${state.lastUpdate}` : 'Waiting for data…';
+
+      updateConnectionDisplay();
+      tickReqRate();
+    }
+
+    /* ── render ────────────────────────────────────────────────── */
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function renderBadges(badges) {
+      if (!badges || !badges.length) return '';
+      return `<div class="badge-list">${badges.map(b => `<span class="badge-pill">${escapeHtml(b)}</span>`).join('')}</div>`;
+    }
+
+    function rowShufflePerSecond(row) {
+      return absInt(row.__shuffleRate);
+    }
+
+    function buildRowMarkup(row, rank) {
+      const usernameFallback = row.__username && row.__username !== row.__nickname ? `@${escapeHtml(row.__username)}` : '';
+      const shuffleDelta = rowShufflePerSecond(row);
+      return `
+        <div class="rank">${rank}</div>
+        <div class="player-cell" title="${escapeHtml(row.__nickname)}">
+          <div class="nickname">${escapeHtml(row.__nickname)}</div>
+          ${usernameFallback ? `<div class="username-fallback">${usernameFallback}</div>` : ''}
+          ${renderBadges(row.__badges)}
+        </div>
+        <div class="mono">${formatAbsInt(row.__score)}</div>
+        <div class="mono hide-sm">${formatAbsInt(shuffleDelta)}</div>
+      `;
+    }
+
+    function makeRowElement(row, rank) {
+      const el = document.createElement('div');
+      el.className = 'list-row';
+      el.dataset.key = row.__key;
+      el.innerHTML = buildRowMarkup(row, rank);
+      return el;
+    }
+
+    function updateRowElement(el, row, rank) {
+      el.dataset.key = row.__key;
+      el.innerHTML = buildRowMarkup(row, rank);
+      return el;
+    }
+
+    function renderRows() {
+      const q = state.search.trim().toLowerCase();
+      let rows = state.rows.filter(row => {
+        if (!q) return true;
+        const haystack = [row.__nickname, row.__username, String(row.__score), ...(row.__badges || [])].join(' | ').toLowerCase();
+        return haystack.includes(q);
+      });
+
+      // In shuffles/sec view, exclude players with 0 shuffles/sec
+      if (state.view === 'shuffle') {
+        rows = rows.filter(row => rowShufflePerSecond(row) > 0);
+      }
+
+      state.filtered = rows;
+      updateSummary();
+
+      const container = els.leaderboardRows;
+      const prevRects = new Map();
+      for (const child of Array.from(container.children)) {
+        if (child.classList && child.classList.contains('list-row') && child.dataset.key) {
+          prevRects.set(child.dataset.key, child.getBoundingClientRect());
+        }
+      }
+
+      if (!rows.length) {
+        container.innerHTML = '<div class="empty">No leaderboard rows match the current filter.</div>';
+        return;
+      }
+
+      const sorted = state.view === 'shuffle'
+        ? [...rows].sort((a, b) => rowShufflePerSecond(b) - rowShufflePerSecond(a) || b.__score - a.__score || a.__nickname.localeCompare(b.__nickname))
+        : [...rows].sort((a, b) => b.__score - a.__score || a.__nickname.localeCompare(b.__nickname));
+
+      const existing = new Map();
+      for (const child of Array.from(container.children)) {
+        if (child.classList && child.classList.contains('list-row') && child.dataset.key) {
+          existing.set(child.dataset.key, child);
+        }
+      }
+
+      const fragment = document.createDocumentFragment();
+      
+      sorted.forEach((row, idx) => {
+        let el = existing.get(row.__key);
+        if (el) {
+          updateRowElement(el, row, idx + 1);
+        } else {
+          el = makeRowElement(row, idx + 1);
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(8px) scale(.99)';
+        }
+        fragment.appendChild(el);
+      });
+
+      container.replaceChildren(fragment);
+
+      requestAnimationFrame(() => {
+        for (const [index, row] of sorted.entries()) {
+          const el = container.children[index];
+          if (!el) continue;
+          const oldRect = prevRects.get(row.__key);
+          const newRect = el.getBoundingClientRect();
+          const isNew = !oldRect;
+          if (oldRect) {
+            const dx = oldRect.left - newRect.left;
+            const dy = oldRect.top - newRect.top;
+            if (dx || dy) {
+              el.animate(
+                [
+                  { transform: `translate(${dx}px, ${dy}px)`, opacity: 0.72 },
+                  { transform: 'translate(0, 0)', opacity: 1 }
+                ],
+                { duration: 320, easing: 'cubic-bezier(.2,.9,.2,1)' }
+              );
+            }
+          }
+          if (isNew) {
+            el.animate(
+              [
+                { transform: 'translateY(8px) scale(.99)', opacity: 0 },
+                { transform: 'translateY(0) scale(1)', opacity: 1 }
+              ],
+              { duration: 260, easing: 'cubic-bezier(.2,.9,.2,1)' }
+            );
+          }
+          el.style.opacity = '';
+          el.style.transform = '';
+        }
+      });
+    }
+
+    /* ── digit wheel animation ─────────────────────────────────── */
+    function buildWheelDigit(initialDigit) {
+      const digit = document.createElement('span');
+      digit.className = 'digit';
+      digit.dataset.pos = String(10 + initialDigit);
+      const track = document.createElement('span');
+      track.className = 'digit-track';
+      for (let cycle = 0; cycle < 3; cycle++) {
+        for (let i = 0; i < 10; i++) {
+          const s = document.createElement('span');
+          s.textContent = String(i);
+          track.appendChild(s);
+        }
+      }
+      digit.appendChild(track);
+      track.style.transform = `translateY(calc(var(--digit-h) * -${10 + initialDigit}))`;
+      return digit;
+    }
+
+    function setWheelDigit(digitEl, newDigit, direction) {
+      const track = digitEl.firstElementChild;
+      const currentPos = Number(digitEl.dataset.pos || 10 + newDigit);
+      const currentDigit = currentPos % 10;
+      const targetPos = direction >= 0
+        ? (newDigit >= currentDigit ? 10 + newDigit : 20 + newDigit)
+        : (newDigit <= currentDigit ? 10 + newDigit : newDigit);
+      digitEl.dataset.pos = String(targetPos);
+      track.style.transform = `translateY(calc(var(--digit-h) * -${targetPos}))`;
+      const settle = () => {
+        track.removeEventListener('transitionend', settle);
+        track.style.transition = 'none';
+        const normalized = 10 + newDigit;
+        digitEl.dataset.pos = String(normalized);
+        track.style.transform = `translateY(calc(var(--digit-h) * -${normalized}))`;
+        void track.offsetHeight;
+        track.style.transition = 'transform 750ms var(--ease)';
+      };
+      track.addEventListener('transitionend', settle, { once: true });
+    }
+
+    function animateValue(container, nextValue) {
+      const next = formatAbsInt(nextValue);
+      const prev = container.dataset.renderedValue ?? '';
+      if (prev === next) return;
+
+      const prevTokens = prev.match(/\d+|\D+/g) || [];
+      const nextTokens = next.match(/\d+|\D+/g) || [];
+      const sameShape = prevTokens.length === nextTokens.length
+        && prevTokens.every((t, i) => /\d/.test(t) === /\d/.test(nextTokens[i]));
+
+      if (!state.animations) {
+        container.textContent = next;
+        container.dataset.initialized = '';
+        container.dataset.renderedValue = next;
+        return;
+      }
+
+      if (!sameShape || !container.dataset.initialized) {
+        container.textContent = '';
+        for (const token of nextTokens) {
+          if (/\d/.test(token)) {
+            for (const ch of token) container.appendChild(buildWheelDigit(Number(ch)));
+          } else {
+            const sep = document.createElement('span');
+            sep.className = 'live-chunk sep';
+            sep.textContent = token;
+            container.appendChild(sep);
+          }
+        }
+        container.dataset.initialized = '1';
+        container.dataset.renderedValue = next;
+        return;
+      }
+
+      const digits = Array.from(container.querySelectorAll('.digit'));
+      let digitPtr = 0;
+      const prevNum = absInt(prev.replace(/[^0-9]/g, '') || 0);
+      const dir = nextValue >= prevNum ? 1 : -1;
+
+      for (const token of nextTokens) {
+        if (/\d/.test(token)) {
+          for (const ch of token) {
+            const digitEl = digits[digitPtr++];
+            if (digitEl) setWheelDigit(digitEl, Number(ch), dir);
+          }
+        }
+      }
+
+      container.dataset.renderedValue = next;
+      // no pulse animation — intentionally removed
+    }
+
+    /* ── websocket value parsing ───────────────────────────────── */
+    function extractWsValue(obj) {
+      if (!obj || typeof obj !== 'object') return null;
+      if (obj.total_crowd !== undefined) return absInt(obj.total_crowd);
+      return firstNumericDeep(obj);
+    }
+
+    function pushWsSample(value) {
+      const now = Date.now();
+      state.wsSamples.push({ time: now, value: absInt(value) });
+      state.wsSamples = state.wsSamples.filter(s => now - s.time <= 6000);
+    }
+
+    function applyWsMessage(data) {
+      let next = null;
+      if (typeof data === 'number') {
+        next = data;
+      } else if (typeof data === 'string') {
+        const trimmed = data.trim();
+        const asNum = Number(trimmed);
+        if (Number.isFinite(asNum)) next = absInt(asNum);
+        else {
+          try {
+            next = extractWsValue(JSON.parse(trimmed));
+          } catch {
+            const m = trimmed.match(/-?\d+(?:\.\d+)?/);
+            if (m) next = absInt(m[0]);
+          }
+        }
+      } else if (data && typeof data === 'object') {
+        next = extractWsValue(data);
+      }
+      if (next === null || next === undefined || !Number.isFinite(next)) return;
+
+      const now = Date.now();
+      const prev = state.wsSamples.length ? state.wsSamples[state.wsSamples.length - 1] : null;
+      if (prev) {
+        const dt = (now - prev.time) / 1000;
+        const rate = dt > 0 ? Math.abs((absInt(next) - prev.value) / dt) : 0;
+        if (rate > 40000000000) return;
+      }
+
+      state.wsValue = absInt(next);
+      state.lastDataTime = now;
+      pushWsSample(next);
+      state.lastUpdate = nowText();
+      trackRequest();
+      updateSummary();
+    }
+
+    /* ── websocket connection ──────────────────────────────────── */
+    function connectWs() {
+      if (state.wsSocket) {
+        try {
+          state.wsSocket.onopen = null;
+          state.wsSocket.onmessage = null;
+          state.wsSocket.onerror = null;
+          state.wsSocket.onclose = null;
+          state.wsSocket.close();
+        } catch {}
+        state.wsSocket = null;
+      }
+      clearTimeout(state.reconnectTimer);
+      clearInterval(state.heartbeatTimer);
+
+      try {
+        state.wsManualClose = false;
+        const socket = new WebSocket(WS_URL);
+        state.wsSocket = socket;
+
+        socket.onopen = () => {
+          state.wsConnected = true;
+          state.wsConnectTime = Date.now();
+          state.reconnectAttempts = 0;
+          // Send keep-alive pings so server doesn't drop idle connection
+          state.heartbeatTimer = setInterval(() => {
+            if (socket.readyState === WebSocket.OPEN) {
+              try { socket.send('ping'); } catch {}
+            }
+          }, 15000);
+          updateConnectionDisplay();
+          updateSummary();
+        };
+
+        socket.onmessage = (event) => applyWsMessage(event.data);
+
+        socket.onerror = () => {};
+
+        socket.onclose = () => {
+          clearInterval(state.heartbeatTimer);
+          if (state.wsManualClose) return;
+          state.wsConnected = false;
+          // Silent immediate reconnect — no delay, no status flash
+          state.reconnectTimer = setTimeout(connectWs, 80);
+        };
+      } catch (err) {
+        console.error('WebSocket connect failed:', err);
+        state.wsConnected = false;
+        state.reconnectTimer = setTimeout(connectWs, 3000);
+      }
+    }
+
+    /* ── API polling ───────────────────────────────────────────── */
+    async function loadLeaderboard() {
+      try {
+        trackRequest();
+        const res = await fetch(API_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const payload = await res.json();
+        state.rows = normalizeLeaderboard(payload);
+        updateRowHistory(state.rows);
+        state.lastUpdate = nowText();
+        state.lastLeaderboardFetch = Date.now();
+        renderRows();
+      } catch (err) {
+        console.error('Leaderboard fetch failed:', err);
+        if (!state.rows.length) {
+          els.leaderboardRows.innerHTML = `<div class="error">Could not load leaderboard. ${escapeHtml(err.message || String(err))}</div>`;
+        }
+      }
+    }
+
+
+    async function loadStats() {
+      try {
+        trackRequest();
+        const res = await fetch(STATS_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const payload = await res.json();
+        state.stats = normalizeStats(payload);
+        renderStats();
+      } catch (err) {
+        console.error('Stats fetch failed:', err);
+        if (!state.stats) {
+          els.statsArrayMeta.textContent = `Could not load stats. ${String(err.message || err)}`;
+        }
+      }
+    }
+
+    function startPolling() {
+      clearInterval(state.pollTimer);
+      state.pollTimer = setInterval(loadLeaderboard, 5000);
+    }
+
+    /* ── view / search ─────────────────────────────────────────── */
+    function setView(view) {
+      state.view = view;
+      els.tabScore.classList.toggle('active', view === 'score');
+      els.tabShuffles.classList.toggle('active', view === 'shuffle');
+      els.tabBestArray.classList.toggle('active', view === 'stats');
+      els.leaderboardWrap.hidden = view === 'stats';
+      els.statsPanel.hidden = view !== 'stats';
+      if (view === 'stats') {
+        renderStats();
+      } else {
+        renderRows();
+      }
+    }
+
+    els.tabScore.addEventListener('click', () => setView('score'));
+    els.tabShuffles.addEventListener('click', () => setView('shuffle'));
+    els.tabBestArray.addEventListener('click', () => setView('stats'));
+    els.searchInput.addEventListener('input', () => {
+      state.search = els.searchInput.value;
+      renderRows();
+    });
+
+    els.refreshBtn.addEventListener('click', async () => {
+      els.refreshBtn.disabled = true;
+      try { await loadLeaderboard(); await loadStats(); }
+      finally { els.refreshBtn.disabled = false; }
+    });
+
+    els.animToggle.addEventListener('click', () => {
+      setAnimationsEnabled(!state.animations);
+      renderRows();
+      renderStats();
+      updateSummary();
+    });
+
+    /* ── init ──────────────────────────────────────────────────── */
+    (async function init() {
+      setAnimationsEnabled(true);
+      await Promise.all([loadLeaderboard(), loadStats()]);
+      connectWs();
+      startPolling();
+      renderRows();
+      renderStats();
+      // 1-second tick for all live values
+      setInterval(() => {
+        updateSummary();
+        tickReqRate();
+      }, 1000);
+      setInterval(() => {
+        loadStats();
+      }, 5000);
+    })();
+  </script>
+</body>
+</html>
