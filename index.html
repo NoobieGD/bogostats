@@ -56,6 +56,7 @@
     .metric{border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.015);border-radius:14px;padding:14px;min-height:108px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
     .metric .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .metric .value{font-size:clamp(15px,1.8vw,32px);font-weight:800;letter-spacing:-.06em;line-height:1;margin-top:8px;min-width:0;white-space:nowrap;overflow:hidden;max-width:100%}
+    .metric .value-wide{overflow:visible;max-width:none}
     .metric .delta{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:6px}
     .main{grid-column:span 8}
     .side{grid-column:span 4}
@@ -230,7 +231,7 @@
       <div class="metrics">
         <div class="metric">
           <div class="label">Total contributors</div>
-          <div class="value"><span class="live-number" id="metricRows">0</span></div>
+          <div class="value value-wide"><span class="live-number" id="metricRows">0</span></div>
           <div class="delta" id="metricRowsDelta">Unique participants in the board</div>
         </div>
         <div class="metric">
@@ -259,7 +260,7 @@
           <div class="delta" id="metricComparisonsDelta">Websocket shuffles × 25</div>
         </div>
         <div class="metric">
-          <div class="label">Current shuffles/sec</div>
+          <div class="label">API shuffles/sec</div>
           <div class="value"><span class="live-number" id="metricWsRate">0</span></div>
           <div class="delta" id="metricWsRateDelta">Live rate from websocket delta</div>
         </div>
@@ -298,6 +299,11 @@
                   <div class="k">Best this second</div>
                   <div class="v" id="statsBestTick">0</div>
                   <div class="s">combined_tick.best from the stats API</div>
+                </div>
+                <div class="mini">
+                  <div class="k">Best array by</div>
+                  <div class="v" id="statsBestSource">Unknown</div>
+                  <div class="s">combined_tick.source from the stats API</div>
                 </div>
                 <div class="mini">
                   <div class="k">Record</div>
@@ -396,7 +402,8 @@
       peakShuffleRate: 0,
       reqWindow: [],
       reqPerSec: 0,
-      lastLeaderboardFetch: null
+      lastLeaderboardFetch: null,
+      statsArrayFlip: 0
     };
 
     const els = {
@@ -436,6 +443,7 @@
       statsPanel:           document.getElementById('statsPanel'),
       leaderboardWrap:      document.getElementById('leaderboardWrap'),
       statsBestTick:        document.getElementById('statsBestTick'),
+      statsBestSource:      document.getElementById('statsBestSource'),
       statsRecord:          document.getElementById('statsRecord'),
       statsRecordHolder:    document.getElementById('statsRecordHolder'),
       statsArrayMeta:       document.getElementById('statsArrayMeta'),
@@ -659,29 +667,36 @@
     function normalizeStats(payload) {
       if (!payload || typeof payload !== 'object') return null;
       const bestArr = payload?.combined_tick?.best_arr || payload?.engine?.tick_best_arr || [];
+      const combinedRateRaw = payload?.combined_rate ?? payload?.combinedTick?.combined_rate ?? payload?.combined_tick?.combined_rate ?? 0;
       return {
         bestTick: absInt(payload?.combined_tick?.best ?? payload?.engine?.best ?? 0),
+        combinedRate: Number.isFinite(Number(combinedRateRaw)) ? Number(combinedRateRaw) : 0,
+        bestSource: String(payload?.combined_tick?.source ?? payload?.source ?? 'Unknown'),
         record: absInt(payload?.record ?? 0),
         recordHolder: String(payload?.record_holder?.nickname ?? 'Unknown'),
         bestArr: Array.isArray(bestArr) ? bestArr.map(v => absInt(v)).filter(Boolean) : []
       };
     }
 
-    function renderStats() {
+    function renderStats(renderArray = true) {
       const stats = state.stats;
       if (!stats) {
         els.statsBestTick.textContent = '0';
+        els.statsBestSource.textContent = 'Unknown';
         els.statsRecord.textContent = '0';
         els.statsRecordHolder.textContent = 'Unknown';
         els.statsArrayMeta.textContent = 'Waiting for stats…';
-        els.bestArrayWrap.innerHTML = '';
+        if (renderArray) els.bestArrayWrap.innerHTML = '';
         return;
       }
 
       els.statsBestTick.textContent = formatAbsInt(stats.bestTick);
+      els.statsBestSource.textContent = stats.bestSource || 'Unknown';
       els.statsRecord.textContent = formatAbsInt(stats.record);
       els.statsRecordHolder.textContent = stats.recordHolder || 'Unknown';
       els.statsArrayMeta.textContent = `${formatAbsInt(stats.bestArr.length)} slots`;
+
+      if (!renderArray) return;
 
       const maxValue = Math.max(25, ...stats.bestArr, 1);
       els.bestArrayWrap.innerHTML = stats.bestArr.map((value, index) => {
@@ -732,9 +747,11 @@
       const apiTop = topScore(state.rows);
       const apiAvg = state.view === 'shuffle' ? averageShuffleRate(rows) : averageApiValue(rows);
       const wsVal = getWsCurrent();
-      const wsRate = getWsRate();
+      const apiRate = state.stats && Number.isFinite(Number(state.stats.combinedRate))
+        ? Math.round(Number(state.stats.combinedRate))
+        : 0;
 
-      if (wsRate > state.peakShuffleRate) state.peakShuffleRate = wsRate;
+      if (apiRate > state.peakShuffleRate) state.peakShuffleRate = apiRate;
 
       animateValue(els.metricRows, uniqueCount);
       animateValue(els.metricApiTotal, apiTotal);
@@ -742,7 +759,7 @@
       animateValue(els.metricAvg, apiAvg);
       animateValue(els.metricWs, wsVal);
       animateValue(els.metricComparisons, wsVal * 25);
-      animateValue(els.metricWsRate, Math.round(wsRate));
+      animateValue(els.metricWsRate, apiRate);
       animateValue(els.metricPeakRate, Math.round(state.peakShuffleRate));
 
       els.metricRowsDelta.textContent = `${formatAbsInt(uniqueCount)} unique participants`;
@@ -753,7 +770,7 @@
         : `${formatAbsInt(apiAvg)} avg shuffles across visible rows`;
       els.metricWsDelta.textContent = `total_crowd from websocket`;
       els.metricComparisonsDelta.textContent = `${formatAbsInt(wsVal)} × 25`;
-      els.metricWsRateDelta.textContent = `Live websocket delta/s`;
+      els.metricWsRateDelta.textContent = `Rounded combined_rate from stats API`;
       els.metricPeakRateDelta.textContent = `Session high`;
 
       els.miniActive.textContent = formatAbsInt(rows.filter(row => rowShufflePerSecond(row) > 0).length);
@@ -782,13 +799,11 @@
     }
 
     function buildRowMarkup(row, rank) {
-      const usernameFallback = row.__username && row.__username !== row.__nickname ? `@${escapeHtml(row.__username)}` : '';
       const shuffleDelta = rowShufflePerSecond(row);
       return `
         <div class="rank">${rank}</div>
         <div class="player-cell" title="${escapeHtml(row.__nickname)}">
           <div class="nickname">${escapeHtml(row.__nickname)}</div>
-          ${usernameFallback ? `<div class="username-fallback">${usernameFallback}</div>` : ''}
           ${renderBadges(row.__badges)}
         </div>
         <div class="mono">${formatAbsInt(row.__score)}</div>
@@ -1116,14 +1131,15 @@
     }
 
 
-    async function loadStats() {
+    async function loadStats(renderArray = true) {
       try {
         trackRequest();
         const res = await fetch(STATS_URL, { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const payload = await res.json();
         state.stats = normalizeStats(payload);
-        renderStats();
+        renderStats(renderArray);
+        updateSummary();
       } catch (err) {
         console.error('Stats fetch failed:', err);
         if (!state.stats) {
@@ -1134,7 +1150,12 @@
 
     function startPolling() {
       clearInterval(state.pollTimer);
-      state.pollTimer = setInterval(loadLeaderboard, 5000);
+      state._statsTick = 0;
+      state.pollTimer = setInterval(() => {
+        loadLeaderboard();
+        const renderArray = (state._statsTick++ % 2) === 0;
+        loadStats(renderArray);
+      }, 1000);
     }
 
     /* ── view / search ─────────────────────────────────────────── */
@@ -1146,7 +1167,7 @@
       els.leaderboardWrap.hidden = view === 'stats';
       els.statsPanel.hidden = view !== 'stats';
       if (view === 'stats') {
-        renderStats();
+        renderStats(true);
       } else {
         renderRows();
       }
@@ -1162,33 +1183,30 @@
 
     els.refreshBtn.addEventListener('click', async () => {
       els.refreshBtn.disabled = true;
-      try { await loadLeaderboard(); await loadStats(); }
+      try { await loadLeaderboard(); await loadStats(true); }
       finally { els.refreshBtn.disabled = false; }
     });
 
     els.animToggle.addEventListener('click', () => {
       setAnimationsEnabled(!state.animations);
       renderRows();
-      renderStats();
+      renderStats(true);
       updateSummary();
     });
 
     /* ── init ──────────────────────────────────────────────────── */
     (async function init() {
       setAnimationsEnabled(true);
-      await Promise.all([loadLeaderboard(), loadStats()]);
+      await Promise.all([loadLeaderboard(), loadStats(true)]);
       connectWs();
       startPolling();
       renderRows();
-      renderStats();
+      renderStats(true);
       // 1-second tick for all live values
       setInterval(() => {
         updateSummary();
         tickReqRate();
       }, 1000);
-      setInterval(() => {
-        loadStats();
-      }, 5000);
     })();
   </script>
 </body>
