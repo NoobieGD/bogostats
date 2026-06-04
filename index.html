@@ -1146,7 +1146,14 @@
 
     function startPolling() {
       clearInterval(state.pollTimer);
-      state.pollTimer = setInterval(loadLeaderboard, 5000);
+      state._pollFlip = 0;
+      state.pollTimer = setInterval(() => {
+        if ((state._pollFlip++ % 2) === 0) {
+          loadLeaderboard();
+        } else {
+          loadStats();
+        }
+      }, 1000);
     }
 
     /* ── view / search ─────────────────────────────────────────── */
@@ -1198,9 +1205,6 @@
         updateSummary();
         tickReqRate();
       }, 1000);
-      setInterval(() => {
-        loadStats();
-      }, 5000);
     })();
   </script>
 </body>
