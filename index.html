@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bogostats beta-v1.2.1</title>
+  <title>bogostats beta-v1.3</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,8 +15,8 @@
       --text:#e8edf2;
       --muted:#8d98a6;
       --line:rgba(255,255,255,.08);
-      --good:#86efac;
-      --bad:#fda4af;
+      --good:#4ca570;
+      --bad:#ea7c58;
       --shadow:0 18px 40px rgba(0,0,0,.35);
       --radius:18px;
       --ease:cubic-bezier(.2,.9,.2,1);
@@ -189,8 +189,8 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       overflow:hidden;
       box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);
     }
-    .array-bar.correct .bar{background:rgba(34,197,94,.85)}
-    .array-bar.incorrect .bar{background:rgba(249,115,22,.85)}
+    .array-bar.correct .bar{background:var(--good)}
+    .array-bar.incorrect .bar{background:var(--bad)}
     .array-bar .num{
       position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
       font-size:11px;font-variant-numeric:tabular-nums;line-height:1;
@@ -350,7 +350,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
     <div class="topbar">
       <div class="brand">
         <h1><span class="brand-bogo">bogo</span><span class="brand-stats">stats.</span></h1>
-        <p class="version">beta-v1.2.1</p>
+        <p class="version">beta-v1.3</p>
         <p class="brand-desc">25 elements, being checked by an api and websocket.</p>
       </div>
       <div class="top-actions">
@@ -416,7 +416,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       <div class="card">
         <div class="card-header">
           <h2>Contribute</h2>
-          <span class="subtle">Protocol-accurate client</span>
+          <span class="subtle">CPU or WebGPU client</span>
         </div>
         <div class="panel-body">
           <div class="contribute-grid">
@@ -444,9 +444,27 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
                   <div class="help">The recovery code issued by <code>welcome</code>. Send an empty string the very first time.</div>
                 </div>
                 <div class="field">
-                  <label for="contribChunk">Chunk size</label>
+                  <label for="contribMode">Compute mode</label>
+                  <select id="contribMode">
+                    <option value="cpu">CPU</option>
+                    <option value="gpu">GPU (WebGPU)</option>
+                  </select>
+                  <div class="help">GPU appears only when WebGPU is available in the browser. Otherwise the client stays on CPU.</div>
+                </div>
+                <div class="field">
+                  <label for="contribChunk">Base chunk size</label>
                   <input id="contribChunk" type="number" min="1" step="1" value="8000000" />
-                  <div class="help">How many shuffle indices the client computes before checking whether it should report.</div>
+                  <div class="help">The raw chunk size before the usage slider trims it down for the active compute mode.</div>
+                </div>
+                <div class="field">
+                  <label for="contribCpuUsage">CPU usage <span id="contribCpuUsageLabel">55%</span></label>
+                  <input id="contribCpuUsage" type="range" min="5" max="100" step="1" value="55" />
+                  <div class="help">Lower values keep the CPU gentler by using smaller batches and more breathing room.</div>
+                </div>
+                <div class="field">
+                  <label for="contribGpuUsage">GPU usage <span id="contribGpuUsageLabel">80%</span></label>
+                  <input id="contribGpuUsage" type="range" min="5" max="100" step="1" value="80" />
+                  <div class="help">When WebGPU is available, this scales the GPU batch size and the amount of work per dispatch.</div>
                 </div>
                 <div class="field">
                   <label for="contribInterval">Report interval (ms)</label>
@@ -459,13 +477,18 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
                 <button class="btn" id="contribStopBtn" type="button">Stop</button>
               </div>
               <div class="small-note" style="margin-top:12px;">
-                Required inputs: <strong>UUID</strong>, <strong>nickname</strong>, and <strong>recovery code</strong>. The client receives <code>seed</code> and <code>count</code> from the server job message, then computes xoshiro128++ shuffles exactly as described.
+                Required inputs: <strong>UUID</strong>, <strong>nickname</strong>, and <strong>recovery code</strong>. CPU mode runs the exact JavaScript shuffler. GPU mode uses WebGPU when the browser supports it, and falls back to CPU if it does not.
               </div>
             </div>
             <div class="mini">
               <div class="k">Live client status</div>
               <div class="v" id="contribStatus">Idle</div>
               <div class="s" id="contribStatusSub">No socket open.</div>
+              <div class="mini" style="margin-top:12px; background:rgba(255,255,255,.015);">
+                <div class="k">Current shuffles/sec</div>
+                <div class="v" id="contribRate">0</div>
+                <div class="s" id="contribRateSub">Throughput from the active compute loop.</div>
+              </div>
               <div class="log-box" id="contribLog" style="margin-top:12px;"></div>
             </div>
           </div>
@@ -817,6 +840,19 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
         best: { best_correct: -1, best_arr: [], best_index: 0 },
         running: false,
         reportEveryMs: 1000,
+        mode: 'cpu',
+        cpuUsage: 55,
+        gpuUsage: 80,
+        gpuReady: false,
+        gpuDevice: null,
+        gpuAdapter: null,
+        gpuPipeline: null,
+        gpuThresholds: null,
+        gpuBatchSize: 4096,
+        rate: 0,
+        startedAt: 0,
+        lastChunkAt: 0,
+        lastRateUpdateAt: 0,
         chunkSize: 8000000,
         lastReportAt: 0,
         nextReportAt: 0,
@@ -885,12 +921,19 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       contribUuid:          document.getElementById('contribUuid'),
       contribNick:          document.getElementById('contribNick'),
       contribCode:          document.getElementById('contribCode'),
+      contribMode:          document.getElementById('contribMode'),
       contribChunk:         document.getElementById('contribChunk'),
+      contribCpuUsage:      document.getElementById('contribCpuUsage'),
+      contribGpuUsage:      document.getElementById('contribGpuUsage'),
+      contribCpuUsageLabel: document.getElementById('contribCpuUsageLabel'),
+      contribGpuUsageLabel: document.getElementById('contribGpuUsageLabel'),
       contribInterval:      document.getElementById('contribInterval'),
       contribStartBtn:      document.getElementById('contribStartBtn'),
       contribStopBtn:       document.getElementById('contribStopBtn'),
       contribStatus:        document.getElementById('contribStatus'),
       contribStatusSub:     document.getElementById('contribStatusSub'),
+      contribRate:          document.getElementById('contribRate'),
+      contribRateSub:       document.getElementById('contribRateSub'),
       contribLog:           document.getElementById('contribLog'),
       contribBestMeta:      document.getElementById('contribBestMeta'),
       contribBestArr:       document.getElementById('contribBestArr'),
@@ -2102,9 +2145,244 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       return { best_correct, best_arr, best_index };
     }
 
+    function makeGpuThresholds() {
+      const out = [0];
+      for (let max = 1; max <= 25; max += 1) {
+        const thr = Number((2n ** 32n) % BigInt(max));
+        out.push(thr >>> 0);
+      }
+      return out;
+    }
+
+    function buildGpuShader() {
+      const thresholds = makeGpuThresholds().map(v => `${v}u`).join(', ');
+      return `
+struct Params {
+  count: u32,
+  base_index: u32,
+  _pad0: u32,
+  _pad1: u32,
+};
+
+@group(0) @binding(0) var<storage, read> inStates: array<vec4<u32>>;
+@group(0) @binding(1) var<storage, read_write> outScores: array<u32>;
+@group(0) @binding(2) var<storage, read_write> outArrs: array<u32>;
+@group(0) @binding(3) var<uniform> params: Params;
+
+const THRESHOLDS: array<u32, 26> = array<u32, 26>(${thresholds});
+
+fn rotl32(x: u32, k: u32) -> u32 {
+  return (x << k) | (x >> (32u - k));
+}
+
+fn xoshiroNext(s: ptr<function, array<u32, 4>>) -> u32 {
+  let result = rotl32(((*s)[0] + (*s)[3]) & 0xffffffffu, 7u) + (*s)[0];
+  let t = ((*s)[1] << 9u) & 0xffffffffu;
+  (*s)[2] = ((*s)[2] ^ (*s)[0]) & 0xffffffffu;
+  (*s)[3] = ((*s)[3] ^ (*s)[1]) & 0xffffffffu;
+  (*s)[1] = ((*s)[1] ^ (*s)[2]) & 0xffffffffu;
+  (*s)[0] = ((*s)[0] ^ (*s)[3]) & 0xffffffffu;
+  (*s)[2] = ((*s)[2] ^ t) & 0xffffffffu;
+  (*s)[3] = rotl32((*s)[3], 11u);
+  return result & 0xffffffffu;
+}
+
+fn xint(s: ptr<function, array<u32, 4>>, max: u32) -> u32 {
+  let thr = THRESHOLDS[max];
+  loop {
+    let x = xoshiroNext(s);
+    if (x >= thr) {
+      return x % max;
+    }
+  }
+}
+
+@compute @workgroup_size(64)
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let idx = gid.x;
+  if (idx >= params.count) {
+    return;
+  }
+
+  var st: array<u32, 4>;
+  let seed = inStates[idx];
+  st[0] = seed.x;
+  st[1] = seed.y;
+  st[2] = seed.z;
+  st[3] = seed.w;
+
+  var arr: array<u32, 25>;
+  var i: u32 = 0u;
+  loop {
+    if (i >= 25u) { break; }
+    arr[i] = i + 1u;
+    i = i + 1u;
+  }
+
+  var j: u32 = 24u;
+  loop {
+    if (j <= 1u) { break; }
+    let pick = xint(&st, j + 1u);
+    let tmp = arr[j];
+    arr[j] = arr[pick];
+    arr[pick] = tmp;
+    j = j - 1u;
+  }
+
+  var score: u32 = 0u;
+  i = 0u;
+  loop {
+    if (i >= 25u) { break; }
+    if (arr[i] == i + 1u) {
+      score = score + 1u;
+    }
+    i = i + 1u;
+  }
+
+  outScores[idx] = score;
+  let base = idx * 25u;
+  i = 0u;
+  loop {
+    if (i >= 25u) { break; }
+    outArrs[base + i] = arr[i];
+    i = i + 1u;
+  }
+}
+`;
+    }
+
+    async function ensureContribGpu() {
+      if (state.contrib.gpuReady && state.contrib.gpuDevice && state.contrib.gpuPipeline) return true;
+      if (!navigator.gpu) return false;
+      try {
+        const adapter = await navigator.gpu.requestAdapter();
+        if (!adapter) return false;
+        const device = await adapter.requestDevice();
+        const module = device.createShaderModule({ code: buildGpuShader() });
+        const pipeline = device.createComputePipeline({
+          layout: 'auto',
+          compute: { module, entryPoint: 'main' }
+        });
+        state.contrib.gpuAdapter = adapter;
+        state.contrib.gpuDevice = device;
+        state.contrib.gpuPipeline = pipeline;
+        state.contrib.gpuThresholds = makeGpuThresholds();
+        state.contrib.gpuReady = true;
+        return true;
+      } catch (error) {
+        state.contrib.gpuReady = false;
+        state.contrib.gpuDevice = null;
+        state.contrib.gpuPipeline = null;
+        state.contrib.gpuAdapter = null;
+        appendContribLog(`gpu unavailable: ${error?.message || error}`);
+        return false;
+      }
+    }
+
+    function buildGpuStates(seed64, startIndex, count) {
+      const states = new Uint32Array(count * 4);
+      for (let i = 0; i < count; i += 1) {
+        const seed = shuffleSeed(seed64, startIndex + i);
+        const s = xseed(seed);
+        states[i * 4 + 0] = s[0] >>> 0;
+        states[i * 4 + 1] = s[1] >>> 0;
+        states[i * 4 + 2] = s[2] >>> 0;
+        states[i * 4 + 3] = s[3] >>> 0;
+      }
+      return states;
+    }
+
+    async function runGpuRange(seed64, lo, hi) {
+      const device = state.contrib.gpuDevice;
+      const pipeline = state.contrib.gpuPipeline;
+      if (!device || !pipeline) return runRange(seed64, lo, hi);
+      const start = Number(lo);
+      const end = Number(hi);
+      const count = Math.max(0, end - start);
+      if (!count) return { best_correct: -1, best_arr: [], best_index: start };
+
+      const states = buildGpuStates(seed64, start, count);
+      const stateBuffer = device.createBuffer({
+        size: states.byteLength,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+      });
+      device.queue.writeBuffer(stateBuffer, 0, states);
+
+      const scoresBuffer = device.createBuffer({
+        size: count * 4,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
+      });
+      const arrBuffer = device.createBuffer({
+        size: count * 25 * 4,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
+      });
+      const paramsBuffer = device.createBuffer({
+        size: 16,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+      });
+      const readScores = device.createBuffer({
+        size: count * 4,
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
+      });
+      const readArrs = device.createBuffer({
+        size: count * 25 * 4,
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
+      });
+
+      const params = new Uint32Array([count >>> 0, start >>> 0, 0, 0]);
+      device.queue.writeBuffer(paramsBuffer, 0, params);
+
+      const encoder = device.createCommandEncoder();
+      const pass = encoder.beginComputePass();
+      pass.setPipeline(pipeline);
+      pass.setBindGroup(0, device.createBindGroup({
+        layout: pipeline.getBindGroupLayout(0),
+        entries: [
+          { binding: 0, resource: { buffer: stateBuffer } },
+          { binding: 1, resource: { buffer: scoresBuffer } },
+          { binding: 2, resource: { buffer: arrBuffer } },
+          { binding: 3, resource: { buffer: paramsBuffer } }
+        ]
+      }));
+      pass.dispatchWorkgroups(Math.ceil(count / 64));
+      pass.end();
+      encoder.copyBufferToBuffer(scoresBuffer, 0, readScores, 0, count * 4);
+      encoder.copyBufferToBuffer(arrBuffer, 0, readArrs, 0, count * 25 * 4);
+      device.queue.submit([encoder.finish()]);
+
+      await Promise.all([readScores.mapAsync(GPUMapMode.READ), readArrs.mapAsync(GPUMapMode.READ)]);
+      const scores = new Uint32Array(readScores.getMappedRange().slice(0));
+      const arrs = new Uint32Array(readArrs.getMappedRange().slice(0));
+      readScores.unmap();
+      readArrs.unmap();
+
+      let best_correct = -1;
+      let best_index = start;
+      let best_arr = [];
+      for (let i = 0; i < count; i += 1) {
+        const score = scores[i];
+        if (score > best_correct) {
+          best_correct = score;
+          best_index = start + i;
+          best_arr = Array.from(arrs.slice(i * 25, i * 25 + 25));
+        }
+      }
+      return { best_correct, best_arr, best_index };
+    }
+
     function updateContribStatus(title, sub) {
       els.contribStatus.textContent = title;
       els.contribStatusSub.textContent = sub;
+    }
+
+    function syncContribRateFrame() {
+      if (!els.contribRate) return;
+      els.contribRate.textContent = `${formatAbsInt(state.contrib.rate)} shuffles/s`;
+      const modeLabel = state.contrib.mode === 'gpu' ? 'GPU mode' : 'CPU mode';
+      const usage = state.contrib.mode === 'gpu' ? state.contrib.gpuUsage : state.contrib.cpuUsage;
+      if (els.contribRateSub) {
+        els.contribRateSub.textContent = `${modeLabel} at ${usage}% of the selected budget.`;
+      }
     }
 
     function contribApplySettings() {
@@ -2112,8 +2390,18 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       state.contrib.uuid = String(els.contribUuid.value || '').trim();
       state.contrib.nickname = String(els.contribNick.value || '').trim();
       state.contrib.code = String(els.contribCode.value || '').trim();
+      state.contrib.mode = els.contribMode?.value === 'gpu' ? 'gpu' : 'cpu';
+      state.contrib.cpuUsage = Math.max(5, Math.min(100, Number(els.contribCpuUsage?.value) || 55));
+      state.contrib.gpuUsage = Math.max(5, Math.min(100, Number(els.contribGpuUsage?.value) || 80));
       state.contrib.chunkSize = Math.max(1, Number(els.contribChunk.value) || 8000000);
       state.contrib.reportEveryMs = Math.max(250, Number(els.contribInterval.value) || 1000);
+      if (els.contribCpuUsageLabel) els.contribCpuUsageLabel.textContent = `${state.contrib.cpuUsage}%`;
+      if (els.contribGpuUsageLabel) els.contribGpuUsageLabel.textContent = `${state.contrib.gpuUsage}%`;
+      state.contrib.gpuBatchSize = Math.max(64, Math.round(state.contrib.chunkSize * (state.contrib.gpuUsage / 100) * 0.0025));
+      if (state.contrib.mode === 'cpu') {
+        state.contrib.chunkSize = Math.max(1, Math.round(state.contrib.chunkSize * (state.contrib.cpuUsage / 100)));
+      }
+      syncContribRateFrame();
     }
 
     function contribStop() {
@@ -2123,6 +2411,8 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       }
       state.contrib.socket = null;
       state.contrib.connected = false;
+      state.contrib.rate = 0;
+      syncContribRateFrame();
       updateContribStatus('Stopped', 'Client is idle.');
       appendContribLog('stopped');
     }
@@ -2145,15 +2435,29 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
     async function contribProcessChunk(socket) {
       if (!state.contrib.running || state.contrib.seed === null) return;
       const start = Number(state.contrib.cursor);
-      const end = Math.min(Number(state.contrib.count), start + state.contrib.chunkSize);
+      const rawLimit = Number(state.contrib.count);
+      const remaining = Math.max(0, rawLimit - start);
+      const batchSize = state.contrib.mode === 'gpu' ? state.contrib.gpuBatchSize : state.contrib.chunkSize;
+      const end = Math.min(rawLimit, start + Math.max(1, batchSize));
       if (end <= start) return;
-      const best = runRange(state.contrib.seed, start, end);
+
+      const t0 = performance.now();
+      const best = state.contrib.mode === 'gpu'
+        ? await runGpuRange(state.contrib.seed, start, end)
+        : runRange(state.contrib.seed, start, end);
+      const t1 = performance.now();
+
       if (!state.contrib.best || best.best_correct > state.contrib.best.best_correct) {
         state.contrib.best = best;
         renderContribPreview();
       }
+
       state.contrib.cursor = BigInt(end);
       state.contrib.total += (end - start);
+      state.contrib.rate = t1 > t0 ? Math.round(((end - start) / ((t1 - t0) / 1000))) : state.contrib.rate;
+      state.contrib.startedAt = state.contrib.startedAt || performance.now();
+      state.contrib.lastChunkAt = t1;
+      syncContribRateFrame();
 
       const now = performance.now();
       if (!state.contrib.lastReportAt || now - state.contrib.lastReportAt >= state.contrib.reportEveryMs) {
@@ -2161,7 +2465,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       }
     }
 
-    function contribStart() {
+    async function contribStart() {
       contribApplySettings();
       if (!state.contrib.uuid || !state.contrib.nickname) {
         updateContribStatus('Missing fields', 'UUID and nickname are required.');
@@ -2179,8 +2483,22 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       state.contrib.seed = null;
       state.contrib.lastReportAt = 0;
       state.contrib.log = [];
+      state.contrib.rate = 0;
+      state.contrib.startedAt = performance.now();
+      syncContribRateFrame();
       els.contribLog.textContent = '';
       renderContribPreview();
+
+      if (state.contrib.mode === 'gpu') {
+        updateContribStatus('Preparing GPU…', 'Checking WebGPU support.');
+        const ok = await ensureContribGpu();
+        if (!ok) {
+          appendContribLog('gpu unavailable, switching to CPU');
+          state.contrib.mode = 'cpu';
+          if (els.contribMode) els.contribMode.value = 'cpu';
+          syncContribRateFrame();
+        }
+      }
 
       const socket = new WebSocket(state.contrib.wsUrl);
       state.contrib.socket = socket;
@@ -2525,10 +2843,18 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
 
     els.contribStartBtn.addEventListener('click', contribStart);
     els.contribStopBtn.addEventListener('click', contribStop);
-    [els.contribWsUrl, els.contribUuid, els.contribNick, els.contribCode, els.contribChunk, els.contribInterval].forEach(input => {
+    [els.contribWsUrl, els.contribUuid, els.contribNick, els.contribCode, els.contribMode, els.contribChunk, els.contribInterval].forEach(input => {
       input.addEventListener('change', contribApplySettings);
       input.addEventListener('input', contribApplySettings);
     });
+    if (els.contribCpuUsage) {
+      els.contribCpuUsage.addEventListener('input', contribApplySettings);
+      els.contribCpuUsage.addEventListener('change', contribApplySettings);
+    }
+    if (els.contribGpuUsage) {
+      els.contribGpuUsage.addEventListener('input', contribApplySettings);
+      els.contribGpuUsage.addEventListener('change', contribApplySettings);
+    }
 
     window.addEventListener('resize', fitAllLiveNumbers);
 
@@ -2538,6 +2864,18 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       syncSettingsControls();
       contribApplySettings();
       renderContribPreview();
+      syncContribRateFrame();
+      if (!navigator.gpu && els.contribMode) {
+        const gpuOption = els.contribMode.querySelector('option[value="gpu"]');
+        if (gpuOption) {
+          gpuOption.disabled = true;
+          gpuOption.textContent = 'GPU (WebGPU unavailable)';
+        }
+        if (els.contribMode.value === 'gpu') {
+          els.contribMode.value = 'cpu';
+          state.contrib.mode = 'cpu';
+        }
+      }
       setViewState('stats');
       await Promise.all([loadLeaderboard(), loadStats()]);
       connectWs();
