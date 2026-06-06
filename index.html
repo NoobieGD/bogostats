@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bogostats beta-v1.1</title>
+  <title>bogostats beta-v1.2</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg:#0b0d10;
@@ -22,6 +22,7 @@
       --ease:cubic-bezier(.2,.9,.2,1);
       --digit-h:1em;
       --digit-w:.58em;
+      --page-font:Roboto,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
       text-rendering:geometricPrecision;
     }
     *{box-sizing:border-box}
@@ -33,11 +34,24 @@
         radial-gradient(900px 600px at 90% 10%, rgba(134,239,172,.05), transparent 45%),
         linear-gradient(180deg,#07090c 0%,var(--bg) 100%);
       color:var(--text);
-      font-family:Roboto,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+      font-family:var(--page-font);
     }
-    body{min-height:100%;padding:24px}
+    body{min-height:100%;padding:24px;letter-spacing:.01em}
+    body[data-theme="light"]{
+      --bg:#edf2f7;
+      --panel:#ffffff;
+      --panel-2:#f4f7fb;
+      --text:#101826;
+      --muted:#5b6675;
+      --line:rgba(16,24,38,.10);
+      --shadow:0 18px 40px rgba(15,23,42,.10);
+      background:
+        radial-gradient(1200px 700px at 15% 0%, rgba(56,189,248,.18), transparent 50%),
+        radial-gradient(900px 600px at 90% 10%, rgba(34,197,94,.10), transparent 45%),
+        linear-gradient(180deg,#f7f9fc 0%,var(--bg) 100%);
+    }
     .shell{max-width:1400px;margin:0 auto;display:grid;gap:16px}
-    .topbar{display:flex;align-items:end;justify-content:space-between;gap:16px;padding:6px 2px}
+    .topbar{display:flex;align-items:end;justify-content:space-between;gap:16px;padding:0 2px 6px}
     .brand h1{margin:0;font-size:clamp(28px,3vw,44px);letter-spacing:-.05em;line-height:1;font-weight:800}
     .brand p{margin:10px 0 0;color:var(--muted);font-size:14px}
     .status-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
@@ -73,9 +87,10 @@
     .list-head,.list-row{display:grid;grid-template-columns:64px 1.8fr 1.1fr 1fr;gap:12px;align-items:center}
     .list-head{padding:13px 14px;font-size:12px;color:var(--muted);background:rgba(255,255,255,.03);border-bottom:1px solid var(--line);text-transform:uppercase;letter-spacing:.05em;position:sticky;top:0;z-index:1}
     .list-rows{max-height:70vh;overflow:auto}
-    .list-row{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.05);font-size:14px}
+    .list-row{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.05);font-size:14px;cursor:pointer}
     .list-row:last-child{border-bottom:0}
     .list-row:hover{background:rgba(255,255,255,.03)}
+    .list-row:focus-visible{outline:2px solid rgba(125,211,252,.55);outline-offset:-2px}
     .rank{color:var(--muted);font-variant-numeric:tabular-nums}
     .player-cell{display:flex;flex-direction:column;gap:7px;min-width:0}
     .nickname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
@@ -118,6 +133,21 @@
     }
     .toggle-btn.on .switch{background:rgba(34,197,94,.28)}
     .toggle-btn.on .switch::after{transform:translateX(18px);background:#eaffef}
+.settings-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.settings-card{border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.settings-card .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.settings-card .v{font-size:18px;font-weight:800;letter-spacing:-.04em;line-height:1.2}
+.settings-card .s{color:var(--muted);font-size:13px;line-height:1.45}
+.settings-card .row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.field select{
+  width:100%;border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:12px;
+  padding:11px 12px;font:inherit;font-size:14px;outline:none
+}
+body[data-font="roboto"]{--page-font:Roboto,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+body[data-font="inter"]{--page-font:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+body[data-font="system"]{--page-font:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+body[data-font="georgia"]{--page-font:Georgia,"Times New Roman",serif}
+body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
     .toggle-label{letter-spacing:.03em}
     .animations-off .digit-track{transition:none !important}
     .animations-off .list-row{transition:none !important}
@@ -168,6 +198,113 @@
       z-index:1;pointer-events:none;white-space:nowrap;
     }
     .stats-note{color:var(--muted);font-size:12px;margin-top:6px}
+    .brand h1{display:flex;align-items:baseline;gap:.08em}
+    .brand-bogo{color:#fff}
+    .brand-stats{color:#f59e0b}
+    .brand .version{margin:8px 0 0;color:var(--muted);font-size:14px;opacity:.75}
+    .brand .brand-desc{margin:6px 0 0;color:var(--muted);font-size:14px}
+    .view-tabs{
+      display:flex;gap:8px;flex-wrap:wrap;
+      position:sticky;top:0;z-index:60;
+      padding:8px 0 10px;
+      margin:0 0 8px;
+      background:linear-gradient(180deg, rgba(7,9,12,.96), rgba(7,9,12,.78));
+      backdrop-filter: blur(10px);
+    }
+    .view-tab{
+      border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:999px;
+      padding:9px 13px;cursor:pointer;font:inherit;font-size:13px;transition:border-color .15s var(--ease),background .15s var(--ease),transform .15s var(--ease)
+    }
+    .view-tab:hover{border-color:rgba(125,211,252,.4);transform:translateY(-1px)}
+    .view-tab.active{border-color:rgba(125,211,252,.7);background:rgba(125,211,252,.12)}
+    .app-view{transition:opacity .24s var(--ease),transform .24s var(--ease),max-height .24s var(--ease)}
+    .app-view[hidden]{display:none !important}
+    .app-view.is-entering{opacity:0;transform:translateY(10px)}
+    .app-view.is-leaving{opacity:0;transform:translateY(-6px)}
+    .view-tab, .tab, .btn, .toggle-btn, .profile-close, .badge-holder-name, .badge-card .holders-btn{will-change:transform,background,border-color,opacity}
+    .live-number{
+      display:inline-flex;align-items:baseline;gap:0;overflow:hidden;white-space:nowrap;max-width:100%;
+      transform-origin:left center;will-change:transform;font-size:inherit
+    }
+    .metric .value{display:flex;align-items:baseline;min-width:0;overflow:hidden}
+    .metric .value .live-number{min-width:0}
+    .metric .value .live-number.fitted{transform-origin:left center}
+    .badge-card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .badge-card{border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+    .badge-card .name{font-weight:800;font-size:16px;letter-spacing:-.03em}
+    .badge-card .meta{color:var(--muted);font-size:12px}
+    .badge-card .count{font-size:28px;font-weight:800;letter-spacing:-.05em}
+    .badge-card .holders{font-size:12px;color:var(--muted)}
+    .profile-modal{
+      position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:1000;
+      background:rgba(0,0,0,.55);backdrop-filter:blur(6px);padding:18px
+    }
+    .profile-modal[hidden]{display:none !important}
+    .profile-modal .dialog{
+      width:min(760px,100%);max-height:min(85vh,900px);overflow:auto;
+      background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 28%),var(--panel);
+      border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:18px
+    }
+    .profile-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:16px}
+    .profile-head h3{margin:0;font-size:24px;letter-spacing:-.04em}
+    .profile-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    .profile-close{border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:999px;padding:10px 12px;cursor:pointer;transition:border-color .15s var(--ease),background .15s var(--ease),transform .15s var(--ease)}
+    .profile-close:hover{border-color:rgba(125,211,252,.4);transform:translateY(-1px)}
+    .profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .profile-stat{border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:16px;padding:14px}
+    .profile-stat .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+    .profile-stat .v{margin-top:6px;font-size:20px;font-weight:800;letter-spacing:-.04em;line-height:1.25;white-space:normal;word-break:break-word}
+    .profile-stat .v.wrap{font-size:16px}
+    .profile-badges{margin-top:14px}
+    .badge-card .holders-btn,
+    .badge-holder-btn,
+    .badge-holders-trigger{
+      appearance:none;border:0;background:transparent;color:#d7e0ea;padding:0;margin:0;
+      font:inherit;cursor:pointer;text-align:left
+    }
+    .badge-card .holders-btn{
+      width:100%;display:block;color:var(--muted);font-size:12px;line-height:1.45;margin-top:auto;
+      padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+      transition:border-color .15s var(--ease),background .15s var(--ease),transform .15s var(--ease),color .15s var(--ease)
+    }
+    .badge-card .holders-btn:hover{border-color:rgba(125,211,252,.4);background:rgba(125,211,252,.08);transform:translateY(-1px);color:var(--text)}
+    .badge-modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:1050;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);padding:18px}
+    .badge-modal[hidden]{display:none !important}
+    .badge-dialog{width:min(860px,100%);max-height:min(88vh,900px);overflow:hidden}
+    .badge-holders-meta{margin-top:6px;color:var(--muted);font-size:13px}
+    .badge-holders-list{
+      margin-top:14px;max-height:min(62vh,650px);overflow:auto;padding-right:6px;
+      display:grid;gap:8px
+    }
+    .badge-holder-row{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:14px;padding:12px 14px
+    }
+    .badge-holder-name{
+      border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:var(--text);
+      border-radius:999px;padding:9px 12px;font:inherit;cursor:pointer;transition:border-color .15s var(--ease),background .15s var(--ease),transform .15s var(--ease)
+    }
+    .badge-holder-name:hover{border-color:rgba(125,211,252,.4);background:rgba(125,211,252,.08);transform:translateY(-1px)}
+    .profile-badges .badge-list{margin-top:10px}
+    .contribute-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:16px}
+    .field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .field{border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:16px;padding:14px}
+    .field label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:8px}
+    .field input, .field textarea{
+      width:100%;border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:12px;
+      padding:11px 12px;font:inherit;font-size:14px;outline:none
+    }
+    .field textarea{min-height:116px;resize:vertical}
+    .field .help{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.45}
+    .contrib-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .log-box{
+      border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:16px;padding:14px;
+      min-height:180px;max-height:340px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5
+    }
+    .small-note{color:var(--muted);font-size:12px;line-height:1.5}
+    .badge-dashboard-top{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+    .badge-dashboard-top .mini{height:100%}
+
     @media (max-width:900px){
       .stats-summary{grid-template-columns:repeat(1,minmax(0,1fr))}
       .array-wrap{grid-template-columns:repeat(10,minmax(0,1fr));min-height:340px}
@@ -204,14 +341,11 @@
   <div class="shell">
     <div class="topbar">
       <div class="brand">
-        <h1>bogostats beta-v1.1</h1>
-        <p>25 elements, being checked by an api and websocket.</p>
+        <h1><span class="brand-bogo">bogo</span><span class="brand-stats">stats.</span></h1>
+        <p class="version">beta-v1.2</p>
+        <p class="brand-desc">25 elements, being checked by an api and websocket.</p>
       </div>
       <div class="top-actions">
-        <button class="toggle-btn on" id="animToggle" type="button" aria-pressed="true">
-          <span class="switch" aria-hidden="true"></span>
-          <span class="toggle-label" id="animToggleLabel">Animations on</span>
-        </button>
         <div class="status-wrap">
           <span class="req-rate" id="reqRate">0 req/s</span>
           <div class="status">
@@ -222,7 +356,188 @@
       </div>
     </div>
 
-    <section class="card">
+    <div class="view-tabs">
+      <button class="view-tab active" id="viewStatsBtn" type="button">Stats</button>
+      <button class="view-tab" id="viewBadgesBtn" type="button">Badges</button>
+      <button class="view-tab" id="viewContributeBtn" type="button">Contribute</button>
+      <button class="view-tab" id="viewSettingsBtn" type="button">Settings</button>
+    </div>
+
+    <section class="app-view" id="badgesView" hidden>
+      <div class="card">
+        <div class="card-header">
+          <h2>Badge dashboard</h2>
+          <span class="subtle" id="badgeViewMeta">Waiting for leaderboard sample…</span>
+        </div>
+        <div class="panel-body">
+          <div class="badge-dashboard-top">
+            <div class="mini">
+              <div class="k">Unique held badges</div>
+              <div class="v" id="badgeUniqueCount">0</div>
+              <div class="s">From fetched contributor profiles</div>
+            </div>
+            <div class="mini">
+              <div class="k">Held badge instances</div>
+              <div class="v" id="badgeHeldCount">0</div>
+              <div class="s">Only badges with held = true</div>
+            </div>
+            <div class="mini">
+              <div class="k">Sampled contributors</div>
+              <div class="v" id="badgeContributorCount">0</div>
+              <div class="s">Contributors from the leaderboard</div>
+            </div>
+            <div class="mini">
+              <div class="k">Top badge</div>
+              <div class="v" id="badgeTopName">Unknown</div>
+              <div class="s" id="badgeTopMeta">Awards / cap</div>
+            </div>
+          </div>
+          <div class="controls" style="margin-bottom:12px;">
+            <div class="small-note">This tab aggregates badges from contributor profiles fetched from the loaded leaderboard sample. It only counts badges where <code>held</code> is true.</div>
+            <button class="btn" id="badgeRefreshBtn" type="button">Refresh badges</button>
+          </div>
+          <div class="badge-card-grid" id="badgeCardGrid">
+            <div class="loading">Load the badge dashboard to see results.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="app-view" id="contributeView" hidden>
+      <div class="card">
+        <div class="card-header">
+          <h2>Contribute</h2>
+          <span class="subtle">Protocol-accurate client</span>
+        </div>
+        <div class="panel-body">
+          <div class="contribute-grid">
+            <div class="mini">
+              <div class="k">Connection setup</div>
+              <div class="field-grid" style="margin-top:12px;">
+                <div class="field">
+                  <label for="contribWsUrl">WebSocket endpoint</label>
+                  <input id="contribWsUrl" value="wss://bogo.swapjs.dev/ws" />
+                  <div class="help">The server socket from the protocol. Keep this on the public host unless you are testing locally.</div>
+                </div>
+                <div class="field">
+                  <label for="contribUuid">UUID</label>
+                  <input id="contribUuid" placeholder="your stable id" />
+                  <div class="help">A persistent 16–64 hex character id. Save it, because reconnects must match.</div>
+                </div>
+                <div class="field">
+                  <label for="contribNick">Nickname</label>
+                  <input id="contribNick" placeholder="2–8 chars" />
+                  <div class="help">The nickname registered with the server. It has to pass validation.</div>
+                </div>
+                <div class="field">
+                  <label for="contribCode">Recovery code</label>
+                  <input id="contribCode" placeholder='from welcome, or "" first connect' />
+                  <div class="help">The recovery code issued by <code>welcome</code>. Send an empty string the very first time.</div>
+                </div>
+                <div class="field">
+                  <label for="contribChunk">Chunk size</label>
+                  <input id="contribChunk" type="number" min="1" step="1" value="8000000" />
+                  <div class="help">How many shuffle indices the client computes before checking whether it should report.</div>
+                </div>
+                <div class="field">
+                  <label for="contribInterval">Report interval (ms)</label>
+                  <input id="contribInterval" type="number" min="250" step="50" value="1000" />
+                  <div class="help">The client reports roughly once per second, matching the protocol guidance.</div>
+                </div>
+              </div>
+              <div class="contrib-actions">
+                <button class="btn" id="contribStartBtn" type="button">Start client</button>
+                <button class="btn" id="contribStopBtn" type="button">Stop</button>
+              </div>
+              <div class="small-note" style="margin-top:12px;">
+                Required inputs: <strong>UUID</strong>, <strong>nickname</strong>, and <strong>recovery code</strong>. The client receives <code>seed</code> and <code>count</code> from the server job message, then computes xoshiro128++ shuffles exactly as described.
+              </div>
+            </div>
+            <div class="mini">
+              <div class="k">Live client status</div>
+              <div class="v" id="contribStatus">Idle</div>
+              <div class="s" id="contribStatusSub">No socket open.</div>
+              <div class="log-box" id="contribLog" style="margin-top:12px;"></div>
+            </div>
+          </div>
+          <div class="mini" style="margin-top:16px;">
+            <div class="k">Best board preview</div>
+            <div class="v" id="contribBestMeta">No results yet</div>
+            <div class="s">The highest-scoring 25-element shuffle found in the current lease.</div>
+            <div class="array-wrap" id="contribBestArr" style="margin-top:12px;min-height:220px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+<section class="app-view" id="settingsView" hidden>
+  <div class="card">
+    <div class="card-header">
+      <h2>Settings</h2>
+      <span class="subtle">Personalize the shell</span>
+    </div>
+    <div class="panel-body">
+      <div class="settings-grid">
+        <div class="settings-card">
+          <div class="k">Appearance</div>
+          <div class="v">Theme</div>
+          <div class="s">Flip between dark and light mode. The page remembers your choice.</div>
+          <div class="field" style="margin:0;">
+            <label for="themeSelect">Theme mode</label>
+            <select id="themeSelect">
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+            </select>
+          </div>
+        </div>
+        <div class="settings-card">
+          <div class="k">Typography</div>
+          <div class="v">Font</div>
+          <div class="s">Swap the page font without touching the data, like changing the paper the numbers are printed on.</div>
+          <div class="field" style="margin:0;">
+            <label for="fontSelect">Page font</label>
+            <select id="fontSelect">
+              <option value="roboto">Roboto</option>
+              <option value="inter">Inter</option>
+              <option value="system">System UI</option>
+              <option value="georgia">Georgia</option>
+              <option value="mono">Monospace</option>
+            </select>
+          </div>
+        </div>
+        <div class="settings-card">
+          <div class="k">Motion</div>
+          <div class="v">Animations</div>
+          <div class="s">Turn transitions on for the full glide or off for instant snaps.</div>
+          <div class="row">
+            <button class="toggle-btn on" id="settingsAnimToggle" type="button" aria-pressed="true">
+              <span class="switch" aria-hidden="true"></span>
+              <span class="toggle-label" id="settingsAnimToggleLabel">Animations on</span>
+            </button>
+          </div>
+        </div>
+        <div class="settings-card">
+          <div class="k">User Stats Popup</div>
+          <div class="v">Auto-update</div>
+          <div class="s">Automatically refresh the contributor stats popup on a timer while it's open.</div>
+          <div class="row">
+            <button class="toggle-btn" id="profileAutoUpdateToggle" type="button" aria-pressed="false">
+              <span class="switch" aria-hidden="true"></span>
+              <span class="toggle-label" id="profileAutoUpdateToggleLabel">Auto-update off</span>
+            </button>
+          </div>
+          <div class="field" style="margin:0;">
+            <label for="profileAutoUpdateInterval">Update every <span id="profileAutoUpdateIntervalLabel">1.00</span>s</label>
+            <input id="profileAutoUpdateInterval" type="range" min="0.25" max="2.5" step="0.05" value="1" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+    <section class="card app-view" id="liveSummaryCard">
       <div class="card-header">
         <h2>Live summary</h2>
         <span class="badge" id="lastUpdated">Waiting for data…</span>
@@ -271,7 +586,7 @@
       </div>
     </section>
 
-    <div class="grid">
+    <div class="grid app-view" id="leaderboardGrid">
       <section class="card main">
         <div class="card-header">
           <h2>Leaderboard</h2>
@@ -370,12 +685,76 @@
       </aside>
     </div>
 
-    <div class="footer-note">Values are absolute whole numbers. Shuffles/sec derived from websocket delta.</div>
+    <div class="footer-note app-view" id="footerNote">Values are absolute whole numbers. Shuffles/sec derived from websocket delta.</div>
+
+    <div class="profile-modal" id="profileModal" hidden>
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+        <div class="profile-head">
+          <div>
+            <h3 id="profileModalTitle">Contributor</h3>
+            <div class="small-note" id="profileModalSub">Loading contributor stats…</div>
+          </div>
+          <div class="profile-actions">
+            <button class="profile-close" id="profileRefreshBtn" type="button">Refresh</button>
+            <button class="profile-close" id="profileCloseBtn" type="button">Close</button>
+          </div>
+        </div>
+        <div class="profile-grid">
+          <div class="profile-stat">
+            <div class="k">Total shuffles</div>
+            <div class="v" id="profileTotal">0</div>
+          </div>
+          <div class="profile-stat">
+            <div class="k">Best shuffle done</div>
+            <div class="v" id="profileBest">0</div>
+          </div>
+          <div class="profile-stat">
+            <div class="k">Active time</div>
+            <div class="v" id="profileActive">0s</div>
+          </div>
+          <div class="profile-stat">
+            <div class="k">Max session</div>
+            <div class="v" id="profileMaxSession">0s</div>
+          </div>
+          <div class="profile-stat">
+            <div class="k">Current shuffles/sec</div>
+            <div class="v" id="profileCurrentRate">0</div>
+          </div>
+          <div class="profile-stat">
+            <div class="k">Leaderboard position</div>
+            <div class="v" id="profilePosition">—</div>
+          </div>
+          <div class="profile-stat">
+            <div class="k">Created at</div>
+            <div class="v wrap" id="profileCreatedAt">—</div>
+          </div>
+        </div>
+        <div class="profile-badges">
+          <div class="k" style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em;">Held badges</div>
+          <div class="badge-list" id="profileBadges"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="badge-modal" id="badgeHoldersModal" hidden>
+      <div class="dialog badge-dialog" role="dialog" aria-modal="true" aria-labelledby="badgeHoldersTitle">
+        <div class="profile-head">
+          <div>
+            <h3 id="badgeHoldersTitle">Badge holders</h3>
+            <div class="small-note" id="badgeHoldersSub">Everyone who got this badge</div>
+          </div>
+          <button class="profile-close" id="badgeHoldersCloseBtn" type="button">Close</button>
+        </div>
+        <div class="badge-holders-meta" id="badgeHoldersMeta"></div>
+        <div class="badge-holders-list" id="badgeHoldersList"></div>
+      </div>
+    </div>
+
   </div>
 
   <script>
     const WS_URL = 'wss://bogo.swapjs.dev/ws';
-    const API_URL = 'https://bogo.swapjs.dev/api/leaderboard?limit=1000';
+    const API_URL = 'https://bogo.swapjs.dev/api/leaderboard?limit=2000';
     const STATS_URL = 'https://bogo.swapjs.dev/api/stats';
 
     const state = {
@@ -384,6 +763,7 @@
       rows: [],
       filtered: [],
       view: 'score',
+      mainView: 'stats',
       wsValue: 0,
       wsConnected: false,
       lastUpdate: null,
@@ -401,7 +781,39 @@
       peakShuffleRate: 0,
       reqWindow: [],
       reqPerSec: 0,
-      lastLeaderboardFetch: null
+      lastLeaderboardFetch: null,
+      badgeSummary: null,
+      badgeLoading: false,
+      badgeSampleSize: 120,
+      contributorCache: new Map(),
+      activeContributorModal: null,
+      activeBadgeModal: null,
+      searchTimer: null,
+      renderRowsRaf: 0,
+      theme: 'dark',
+      font: 'roboto',
+      profileAutoUpdate: false,
+      profileAutoUpdateIntervalSec: 1.0,
+      profileAutoUpdateTimer: null,
+      contrib: {
+        wsUrl: 'wss://bogo.swapjs.dev/ws',
+        uuid: '',
+        nickname: '',
+        code: '',
+        connected: false,
+        socket: null,
+        seed: null,
+        count: 0n,
+        cursor: 0n,
+        total: 0,
+        best: { best_correct: -1, best_arr: [], best_index: 0 },
+        running: false,
+        reportEveryMs: 1000,
+        chunkSize: 8000000,
+        lastReportAt: 0,
+        nextReportAt: 0,
+        log: []
+      }
     };
 
     const els = {
@@ -436,8 +848,6 @@
       tabScore:             document.getElementById('tabScore'),
       tabShuffles:          document.getElementById('tabShuffles'),
       tabBestArray:         document.getElementById('tabBestArray'),
-      animToggle:           document.getElementById('animToggle'),
-      animToggleLabel:      document.getElementById('animToggleLabel'),
       statsPanel:           document.getElementById('statsPanel'),
       leaderboardWrap:      document.getElementById('leaderboardWrap'),
       statsBestTick:        document.getElementById('statsBestTick'),
@@ -445,7 +855,65 @@
       statsRecord:          document.getElementById('statsRecord'),
       statsRecordHolder:    document.getElementById('statsRecordHolder'),
       statsArrayMeta:       document.getElementById('statsArrayMeta'),
-      bestArrayWrap:        document.getElementById('bestArrayWrap')
+      bestArrayWrap:        document.getElementById('bestArrayWrap'),
+      viewStatsBtn:         document.getElementById('viewStatsBtn'),
+      viewBadgesBtn:        document.getElementById('viewBadgesBtn'),
+      viewContributeBtn:    document.getElementById('viewContributeBtn'),
+      viewSettingsBtn:      document.getElementById('viewSettingsBtn'),
+      liveSummaryCard:      document.getElementById('liveSummaryCard'),
+      leaderboardGrid:      document.getElementById('leaderboardGrid'),
+      footerNote:           document.getElementById('footerNote'),
+      badgesView:           document.getElementById('badgesView'),
+      badgeViewMeta:        document.getElementById('badgeViewMeta'),
+      badgeUniqueCount:     document.getElementById('badgeUniqueCount'),
+      badgeHeldCount:       document.getElementById('badgeHeldCount'),
+      badgeContributorCount:document.getElementById('badgeContributorCount'),
+      badgeTopName:         document.getElementById('badgeTopName'),
+      badgeTopMeta:         document.getElementById('badgeTopMeta'),
+      badgeCardGrid:        document.getElementById('badgeCardGrid'),
+      badgeRefreshBtn:      document.getElementById('badgeRefreshBtn'),
+      contributeView:       document.getElementById('contributeView'),
+      contribWsUrl:         document.getElementById('contribWsUrl'),
+      contribUuid:          document.getElementById('contribUuid'),
+      contribNick:          document.getElementById('contribNick'),
+      contribCode:          document.getElementById('contribCode'),
+      contribChunk:         document.getElementById('contribChunk'),
+      contribInterval:      document.getElementById('contribInterval'),
+      contribStartBtn:      document.getElementById('contribStartBtn'),
+      contribStopBtn:       document.getElementById('contribStopBtn'),
+      contribStatus:        document.getElementById('contribStatus'),
+      contribStatusSub:     document.getElementById('contribStatusSub'),
+      contribLog:           document.getElementById('contribLog'),
+      contribBestMeta:      document.getElementById('contribBestMeta'),
+      contribBestArr:       document.getElementById('contribBestArr'),
+      profileModal:         document.getElementById('profileModal'),
+      profileModalTitle:    document.getElementById('profileModalTitle'),
+      profileModalSub:      document.getElementById('profileModalSub'),
+      profileCloseBtn:      document.getElementById('profileCloseBtn'),
+      profileRefreshBtn:    document.getElementById('profileRefreshBtn'),
+      profileTotal:         document.getElementById('profileTotal'),
+      profileBest:          document.getElementById('profileBest'),
+      profileActive:        document.getElementById('profileActive'),
+      profileMaxSession:    document.getElementById('profileMaxSession'),
+      profileCurrentRate:   document.getElementById('profileCurrentRate'),
+      profilePosition:      document.getElementById('profilePosition'),
+      profileCreatedAt:     document.getElementById('profileCreatedAt'),
+      profileBadges:        document.getElementById('profileBadges'),
+      badgeHoldersModal:    document.getElementById('badgeHoldersModal'),
+      badgeHoldersTitle:    document.getElementById('badgeHoldersTitle'),
+      badgeHoldersSub:      document.getElementById('badgeHoldersSub'),
+      badgeHoldersCloseBtn: document.getElementById('badgeHoldersCloseBtn'),
+      badgeHoldersMeta:     document.getElementById('badgeHoldersMeta'),
+      badgeHoldersList:     document.getElementById('badgeHoldersList'),
+      settingsView:         document.getElementById('settingsView'),
+      themeSelect:          document.getElementById('themeSelect'),
+      fontSelect:           document.getElementById('fontSelect'),
+      settingsAnimToggle:   document.getElementById('settingsAnimToggle'),
+      settingsAnimToggleLabel: document.getElementById('settingsAnimToggleLabel'),
+      profileAutoUpdateToggle: document.getElementById('profileAutoUpdateToggle'),
+      profileAutoUpdateToggleLabel: document.getElementById('profileAutoUpdateToggleLabel'),
+      profileAutoUpdateInterval: document.getElementById('profileAutoUpdateInterval'),
+      profileAutoUpdateIntervalLabel: document.getElementById('profileAutoUpdateIntervalLabel')
     };
 
     /* ── request tracking ──────────────────────────────────────── */
@@ -470,12 +938,123 @@
       els.connText.textContent = text;
     }
 
+    function savePreference(key, value) {
+      try { localStorage.setItem(key, value); } catch {}
+    }
+
+    function loadPreference(key, fallback) {
+      try {
+        const value = localStorage.getItem(key);
+        return value == null ? fallback : value;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function applyTheme(theme, persist = true) {
+      const next = theme === 'light' ? 'light' : 'dark';
+      state.theme = next;
+      document.body.dataset.theme = next;
+      if (els.themeSelect) els.themeSelect.value = next;
+      if (persist) savePreference('bogostats.theme', next);
+    }
+
+    function applyFont(font, persist = true) {
+      const next = ['roboto', 'inter', 'system', 'georgia', 'mono'].includes(font) ? font : 'roboto';
+      state.font = next;
+      document.body.dataset.font = next;
+      if (els.fontSelect) els.fontSelect.value = next;
+      if (persist) savePreference('bogostats.font', next);
+    }
+
+    function setSettingsAnimations(on, persist = true) {
+      setAnimationsEnabled(on);
+      if (persist) savePreference('bogostats.animations', state.animations ? '1' : '0');
+    }
+
+    function loadSettings() {
+      applyTheme(loadPreference('bogostats.theme', 'dark'), false);
+      applyFont(loadPreference('bogostats.font', 'roboto'), false);
+      const anim = loadPreference('bogostats.animations', '1') !== '0';
+      setAnimationsEnabled(anim);
+      const autoUpdate = loadPreference('bogostats.profileAutoUpdate', '0') === '1';
+      const intervalSec = Math.max(0.25, Math.min(2.5, parseFloat(loadPreference('bogostats.profileAutoUpdateInterval', '1')) || 1));
+      state.profileAutoUpdate = autoUpdate;
+      state.profileAutoUpdateIntervalSec = intervalSec;
+    }
+
+    function syncSettingsControls() {
+      if (els.themeSelect) els.themeSelect.value = state.theme;
+      if (els.fontSelect) els.fontSelect.value = state.font;
+      if (els.settingsAnimToggle) {
+        els.settingsAnimToggle.classList.toggle('on', state.animations);
+        els.settingsAnimToggle.setAttribute('aria-pressed', String(state.animations));
+      }
+      if (els.settingsAnimToggleLabel) {
+        els.settingsAnimToggleLabel.textContent = state.animations ? 'Animations on' : 'Animations off';
+      }
+      if (els.profileAutoUpdateToggle) {
+        els.profileAutoUpdateToggle.classList.toggle('on', state.profileAutoUpdate);
+        els.profileAutoUpdateToggle.setAttribute('aria-pressed', String(state.profileAutoUpdate));
+      }
+      if (els.profileAutoUpdateToggleLabel) {
+        els.profileAutoUpdateToggleLabel.textContent = state.profileAutoUpdate ? 'Auto-update on' : 'Auto-update off';
+      }
+      if (els.profileAutoUpdateInterval) {
+        els.profileAutoUpdateInterval.value = String(state.profileAutoUpdateIntervalSec);
+      }
+      if (els.profileAutoUpdateIntervalLabel) {
+        els.profileAutoUpdateIntervalLabel.textContent = state.profileAutoUpdateIntervalSec.toFixed(2);
+      }
+    }
+
     function setAnimationsEnabled(on) {
       state.animations = !!on;
       document.body.classList.toggle('animations-off', !state.animations);
-      els.animToggle.classList.toggle('on', state.animations);
-      els.animToggle.setAttribute('aria-pressed', String(state.animations));
-      els.animToggleLabel.textContent = state.animations ? 'Animations on' : 'Animations off';
+      if (els.settingsAnimToggle) {
+        els.settingsAnimToggle.classList.toggle('on', state.animations);
+        els.settingsAnimToggle.setAttribute('aria-pressed', String(state.animations));
+      }
+      if (els.settingsAnimToggleLabel) {
+        els.settingsAnimToggleLabel.textContent = state.animations ? 'Animations on' : 'Animations off';
+      }
+    }
+
+    function setProfileAutoUpdate(on, persist = true) {
+      state.profileAutoUpdate = !!on;
+      if (els.profileAutoUpdateToggle) {
+        els.profileAutoUpdateToggle.classList.toggle('on', state.profileAutoUpdate);
+        els.profileAutoUpdateToggle.setAttribute('aria-pressed', String(state.profileAutoUpdate));
+      }
+      if (els.profileAutoUpdateToggleLabel) {
+        els.profileAutoUpdateToggleLabel.textContent = state.profileAutoUpdate ? 'Auto-update on' : 'Auto-update off';
+      }
+      if (persist) savePreference('bogostats.profileAutoUpdate', state.profileAutoUpdate ? '1' : '0');
+      if (state.profileAutoUpdate) {
+        startProfileAutoUpdate();
+      } else {
+        stopProfileAutoUpdate();
+      }
+    }
+
+    function startProfileAutoUpdate() {
+      stopProfileAutoUpdate();
+      if (!state.profileAutoUpdate || !state.activeContributorModal) return;
+      const ms = Math.round(Math.max(250, state.profileAutoUpdateIntervalSec * 1000));
+      state.profileAutoUpdateTimer = setInterval(async () => {
+        if (!state.profileAutoUpdate || !state.activeContributorModal) {
+          stopProfileAutoUpdate();
+          return;
+        }
+        await refreshActiveProfile();
+      }, ms);
+    }
+
+    function stopProfileAutoUpdate() {
+      if (state.profileAutoUpdateTimer) {
+        clearInterval(state.profileAutoUpdateTimer);
+        state.profileAutoUpdateTimer = null;
+      }
     }
 
     function updateConnectionDisplay() {
@@ -619,12 +1198,58 @@
       return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(absInt(n));
     }
 
+    function formatDuration(ms) {
+      const value = Math.max(0, Math.trunc(Number(ms) || 0));
+      const parts = [];
+      const units = [
+        ['d', 86400000],
+        ['h', 3600000],
+        ['m', 60000],
+        ['s', 1000]
+      ];
+      let remaining = value;
+      for (const [label, size] of units) {
+        if (remaining >= size || (label === 's' && !parts.length)) {
+          const n = Math.floor(remaining / size);
+          remaining -= n * size;
+          if (n > 0 || !parts.length) parts.push(`${n}${label}`);
+        }
+      }
+      if (!parts.length) return '0s';
+      return parts.join(' ');
+    }
+
+    function normalizeUnixMillis(value) {
+      const n = Number(value);
+      if (!Number.isFinite(n) || n <= 0) return null;
+      return n < 1e12 ? Math.trunc(n * 1000) : Math.trunc(n);
+    }
+
+    function formatTimestamp(value) {
+      const ms = normalizeUnixMillis(value);
+      if (!ms) return '—';
+      const d = new Date(ms);
+      if (Number.isNaN(d.getTime())) return '—';
+      return d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'medium' });
+    }
+
     function sumApiValue(rows) {
       return rows.reduce((sum, row) => sum + absInt(row.__score), 0);
     }
 
     function topScore(rows) {
       return rows.length ? absInt(rows[0].__score) : 0;
+    }
+
+    function getLeaderboardPositionByNickname(nickname) {
+      const key = String(nickname || '').trim().toLowerCase();
+      if (!key || !state.rows.length) return null;
+      const sorted = [...state.rows].sort((a, b) => b.__score - a.__score || a.__nickname.localeCompare(b.__nickname));
+      const found = sorted.findIndex(row => {
+        const values = [row.__nickname, row.__username, row.__key].map(v => String(v || '').trim().toLowerCase());
+        return values.includes(key);
+      });
+      return found >= 0 ? found + 1 : null;
     }
 
     function averageApiValue(rows) {
@@ -736,7 +1361,7 @@
       }
     }
 
-    function updateSummary() {
+    function updateSummary(force = false) {
       const rows = state.filtered;
       const uniqueCount = state.rows.length;
       const apiTotal = sumApiValue(rows);
@@ -749,14 +1374,14 @@
 
       if (apiRate > state.peakShuffleRate) state.peakShuffleRate = apiRate;
 
-      animateValue(els.metricRows, uniqueCount);
-      animateValue(els.metricApiTotal, apiTotal);
-      animateValue(els.metricTop, apiTop);
-      animateValue(els.metricAvg, apiAvg);
-      animateValue(els.metricWs, wsVal);
-      animateValue(els.metricComparisons, wsVal * 25);
-      animateValue(els.metricWsRate, apiRate);
-      animateValue(els.metricPeakRate, Math.round(state.peakShuffleRate));
+      animateValue(els.metricRows, uniqueCount, force);
+      animateValue(els.metricApiTotal, apiTotal, force);
+      animateValue(els.metricTop, apiTop, force);
+      animateValue(els.metricAvg, apiAvg, force);
+      animateValue(els.metricWs, wsVal, force);
+      animateValue(els.metricComparisons, wsVal * 25, force);
+      animateValue(els.metricWsRate, apiRate, force);
+      animateValue(els.metricPeakRate, Math.round(state.peakShuffleRate), force);
 
       els.metricRowsDelta.textContent = `${formatAbsInt(uniqueCount)} unique participants`;
       els.metricApiDelta.textContent = `${formatAbsInt(apiTotal)} total shuffles visible`;
@@ -772,12 +1397,15 @@
       els.miniActive.textContent = formatAbsInt(rows.filter(row => rowShufflePerSecond(row) > 0).length);
       els.miniFastest.textContent = formatAbsInt(rows.reduce((max, row) => Math.max(max, rowShufflePerSecond(row)), 0));
       els.miniMedian.textContent = formatAbsInt(medianShuffleRate(rows));
-      els.miniTopShare.textContent = `${formatAbsInt(topTenShare(rows))}%`;
+      els.miniTopShare.textContent = `${topTenShare(rows).toFixed(2)}%`;
       els.leaderboardMeta.textContent = `${formatAbsInt(rows.length)} entries shown`;
       els.lastUpdated.textContent = state.lastUpdate ? `Updated ${state.lastUpdate}` : 'Waiting for data…';
 
       updateConnectionDisplay();
       tickReqRate();
+      if (state.mainView === 'badges') {
+        loadBadgeStats(false);
+      }
     }
 
     /* ── render ────────────────────────────────────────────────── */
@@ -811,12 +1439,18 @@
       const el = document.createElement('div');
       el.className = 'list-row';
       el.dataset.key = row.__key;
+      el.dataset.nickname = row.__nickname;
+      el.tabIndex = 0;
+      el.setAttribute('role', 'button');
       el.innerHTML = buildRowMarkup(row, rank);
       return el;
     }
 
     function updateRowElement(el, row, rank) {
       el.dataset.key = row.__key;
+      el.dataset.nickname = row.__nickname;
+      el.setAttribute('role', 'button');
+      el.tabIndex = 0;
       el.innerHTML = buildRowMarkup(row, rank);
       return el;
     }
@@ -952,10 +1586,13 @@
       track.addEventListener('transitionend', settle, { once: true });
     }
 
-    function animateValue(container, nextValue) {
+    function animateValue(container, nextValue, force = false) {
       const next = formatAbsInt(nextValue);
       const prev = container.dataset.renderedValue ?? '';
-      if (prev === next) return;
+      if (!force && prev === next) {
+        fitLiveNumber(container);
+        return;
+      }
 
       const prevTokens = prev.match(/\d+|\D+/g) || [];
       const nextTokens = next.match(/\d+|\D+/g) || [];
@@ -966,10 +1603,11 @@
         container.textContent = next;
         container.dataset.initialized = '';
         container.dataset.renderedValue = next;
+        fitLiveNumber(container);
         return;
       }
 
-      if (!sameShape || !container.dataset.initialized) {
+      if (!sameShape || !container.dataset.initialized || force) {
         container.textContent = '';
         for (const token of nextTokens) {
           if (/\d/.test(token)) {
@@ -983,6 +1621,7 @@
         }
         container.dataset.initialized = '1';
         container.dataset.renderedValue = next;
+        fitLiveNumber(container);
         return;
       }
 
@@ -1001,7 +1640,625 @@
       }
 
       container.dataset.renderedValue = next;
+      fitLiveNumber(container);
       // no pulse animation — intentionally removed
+    }
+
+
+    function fitLiveNumber(container) {
+      if (!container) return;
+      const parent = container.parentElement;
+      if (!parent) return;
+      container.style.fontSize = '';
+      container.style.transform = '';
+      const parentWidth = parent.clientWidth || 0;
+      if (!parentWidth) return;
+      const textWidth = container.scrollWidth || container.getBoundingClientRect().width || 0;
+      if (!textWidth || textWidth <= parentWidth) return;
+      const scale = Math.max(0.55, Math.min(1, (parentWidth - 4) / textWidth));
+      container.style.fontSize = `calc(1em * ${scale})`;
+    }
+
+    function fitAllLiveNumbers() {
+      document.querySelectorAll('.live-number').forEach(fitLiveNumber);
+    }
+
+    function scheduleRenderRows() {
+      if (state.renderRowsRaf) return;
+      state.renderRowsRaf = requestAnimationFrame(() => {
+        state.renderRowsRaf = 0;
+        renderRows();
+      });
+    }
+
+    function animateSectionVisibility(section, show) {
+      if (!section) return;
+      clearTimeout(section._hideTimer);
+      if (show) {
+        section.hidden = false;
+        section.classList.remove('is-leaving');
+        section.classList.add('is-entering');
+        requestAnimationFrame(() => section.classList.remove('is-entering'));
+      } else {
+        section.classList.remove('is-entering');
+        section.classList.add('is-leaving');
+        section._hideTimer = setTimeout(() => {
+          section.hidden = true;
+          section.classList.remove('is-leaving');
+        }, state.animations ? 170 : 0);
+      }
+    }
+
+    function setViewState(view) {
+      state.mainView = view;
+      els.viewStatsBtn.classList.toggle('active', view === 'stats');
+      els.viewBadgesBtn.classList.toggle('active', view === 'badges');
+      els.viewContributeBtn.classList.toggle('active', view === 'contribute');
+      els.viewSettingsBtn.classList.toggle('active', view === 'settings');
+
+      const sections = [
+        [els.liveSummaryCard, view === 'stats'],
+        [els.leaderboardGrid, view === 'stats'],
+        [els.footerNote, view === 'stats'],
+        [els.badgesView, view === 'badges'],
+        [els.contributeView, view === 'contribute'],
+        [els.settingsView, view === 'settings']
+      ];
+
+      for (const [section, show] of sections) {
+        if (!section) continue;
+        animateSectionVisibility(section, show);
+      }
+
+      if (view === 'stats') {
+        renderRows();
+        renderStats();
+        updateSummary(true);
+      } else if (view === 'badges') {
+        loadBadgeStats(true);
+      } else if (view === 'contribute') {
+        renderContribPreview();
+      } else if (view === 'settings') {
+        syncSettingsControls();
+      }
+      fitAllLiveNumbers();
+    }
+
+    function normalizeBadgeEntry(badge) {
+      if (!badge || typeof badge !== 'object') return null;
+      const name = String(badge.name ?? badge.label ?? badge.title ?? '').trim();
+      if (!name) return null;
+      const held = badge.held === true;
+      const minted = badge.minted ?? null;
+      const cap = badge.cap ?? null;
+      return { name, held, minted, cap };
+    }
+
+    function normalizeContributor(payload) {
+      if (!payload || typeof payload !== 'object') return null;
+      const badges = Array.isArray(payload.badges) ? payload.badges.map(normalizeBadgeEntry).filter(Boolean) : [];
+      return {
+        nickname: String(payload.nickname ?? '').trim() || 'Unknown',
+        total: absInt(payload.total ?? payload.lifetime_shuffles ?? 0),
+        best: absInt(payload.all_time_best ?? 0),
+        active_ms: absInt(payload.active_ms ?? 0),
+        max_session_ms: absInt(payload.max_session_ms ?? 0),
+        current_shuffle_rate: absInt(payload.current_shuffles_sec ?? payload.shuffles_sec ?? payload.shuffles_per_sec ?? payload.shuffle_rate ?? payload.rate ?? 0),
+        created_at: normalizeUnixMillis(payload.created_at ?? payload.createdAt ?? payload.created ?? payload.joined_at ?? payload.joinedAt ?? null),
+        badges
+      };
+    }
+
+    function renderContributorBadges(list) {
+      if (!list || !list.length) return '<div class="small-note">No held badges.</div>';
+      return `<div class="badge-list">${list.map(b => `<span class="badge-pill">${escapeHtml(b.name)}</span>`).join('')}</div>`;
+    }
+
+    function renderProfile(profile) {
+      const currentRow = state.rows.find(row => {
+        const values = [row.__nickname, row.__username, row.__key].map(v => String(v || '').trim().toLowerCase());
+        return values.includes(String(profile.nickname || '').trim().toLowerCase());
+      }) || null;
+      const currentRate = currentRow ? rowShufflePerSecond(currentRow) : absInt(profile.current_shuffle_rate);
+      const leaderboardTotal = currentRow ? currentRow.__score : null;
+      const position = getLeaderboardPositionByNickname(profile.nickname);
+
+      els.profileModalTitle.textContent = profile.nickname || 'Contributor';
+      els.profileModalSub.textContent = 'Loaded from api/contributor · synced with current leaderboard';
+      els.profileTotal.textContent = leaderboardTotal != null ? formatAbsInt(leaderboardTotal) : formatAbsInt(profile.total);
+      els.profileBest.textContent = formatAbsInt(profile.best);
+      els.profileActive.textContent = formatDuration(profile.active_ms);
+      els.profileMaxSession.textContent = formatDuration(profile.max_session_ms);
+      els.profileCurrentRate.textContent = formatAbsInt(currentRate);
+      els.profilePosition.textContent = position ? `#${formatAbsInt(position)}` : '—';
+      els.profileCreatedAt.textContent = profile.created_at ? formatTimestamp(profile.created_at) : '—';
+      const heldBadges = profile.badges.filter(b => b.held);
+      els.profileBadges.innerHTML = renderContributorBadges(heldBadges);
+    }
+
+    function openProfileModalLoading(nickname) {
+      els.profileModalTitle.textContent = nickname || 'Contributor';
+      els.profileModalSub.textContent = 'Loading contributor stats…';
+      els.profileTotal.textContent = '0';
+      els.profileBest.textContent = '0';
+      els.profileActive.textContent = '0s';
+      els.profileMaxSession.textContent = '0s';
+      els.profileCurrentRate.textContent = '0';
+      els.profilePosition.textContent = '—';
+      els.profileCreatedAt.textContent = '—';
+      els.profileBadges.innerHTML = '<div class="small-note">Loading…</div>';
+      els.profileModal.hidden = false;
+    }
+
+    function closeProfileModal() {
+      els.profileModal.hidden = true;
+      state.activeContributorModal = null;
+      stopProfileAutoUpdate();
+    }
+
+    async function refreshActiveProfile() {
+      if (!state.activeContributorModal) return;
+      await showContributorModal(state.activeContributorModal, true);
+    }
+
+    function closeBadgeHoldersModal() {
+      els.badgeHoldersModal.hidden = true;
+      state.activeBadgeModal = null;
+    }
+
+    function openBadgeHoldersModal(badgeName) {
+      const summary = state.badgeSummary;
+      if (!summary) return;
+      const badge = summary.badges.find(item => item.name === badgeName);
+      if (!badge) return;
+
+      state.activeBadgeModal = badgeName;
+      els.badgeHoldersTitle.textContent = badge.name;
+      const minted = badge.minted != null ? absInt(badge.minted) : badge.heldCount;
+      const capText = badge.cap != null ? `${formatAbsInt(minted)} / ${formatAbsInt(badge.cap)}` : formatAbsInt(minted);
+      els.badgeHoldersSub.textContent = `${capText} awarded · ${formatAbsInt(badge.heldCount)} holder${badge.heldCount === 1 ? '' : 's'}`;
+      els.badgeHoldersMeta.textContent = 'Tap a name to open that user’s stats.';
+      els.badgeHoldersList.innerHTML = badge.holders.map((name, index) => `
+        <div class="badge-holder-row">
+          <button class="badge-holder-name" type="button" data-nickname="${escapeHtml(name)}">${escapeHtml(name)}</button>
+          <span class="badge-holder-count">Holder ${formatAbsInt(index + 1)}</span>
+        </div>
+      `).join('');
+      els.badgeHoldersModal.hidden = false;
+    }
+
+    async function fetchContributorProfile(nickname, force = false) {
+      const key = String(nickname || '').trim();
+      if (!key) return null;
+      if (!force && state.contributorCache.has(key)) return state.contributorCache.get(key);
+      const url = `https://bogo.swapjs.dev/api/contributor?nickname=${encodeURIComponent(key)}`;
+      trackRequest();
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const payload = await res.json();
+      const profile = normalizeContributor(payload);
+      if (profile) state.contributorCache.set(key, profile);
+      return profile;
+    }
+
+    async function showContributorModal(nickname, force = false) {
+      const key = String(nickname || '').trim();
+      if (!key) return;
+      state.activeContributorModal = key;
+      stopProfileAutoUpdate();
+      openProfileModalLoading(key);
+      try {
+        const profile = await fetchContributorProfile(key);
+        if (!profile || state.activeContributorModal !== key) return;
+        renderProfile(profile);
+        startProfileAutoUpdate();
+      } catch (err) {
+        if (state.activeContributorModal !== key) return;
+        els.profileModalSub.textContent = `Could not load contributor stats: ${err.message || err}`;
+        els.profileBadges.innerHTML = '<div class="small-note">No contributor data loaded.</div>';
+      }
+    }
+
+    function aggregateBadgeStats(profiles) {
+      const badges = new Map();
+      let heldInstances = 0;
+      for (const profile of profiles) {
+        for (const badge of profile.badges || []) {
+          if (!badge.held) continue;
+          heldInstances += 1;
+          const current = badges.get(badge.name) || {
+            name: badge.name,
+            heldCount: 0,
+            minted: badge.minted,
+            cap: badge.cap,
+            holders: []
+          };
+          current.heldCount += 1;
+          if (current.minted == null && badge.minted != null) current.minted = badge.minted;
+          if (current.cap == null && badge.cap != null) current.cap = badge.cap;
+          current.holders.push(profile.nickname);
+          badges.set(badge.name, current);
+        }
+      }
+      return { badges: [...badges.values()].sort((a, b) => b.heldCount - a.heldCount || a.name.localeCompare(b.name)), heldInstances };
+    }
+
+    async function loadBadgeStats(force = false) {
+      if (state.badgeLoading) return;
+      if (state.badgeSummary && !force && Date.now() - state.badgeSummary.fetchedAt < 45000) {
+        renderBadgeDashboard();
+        return;
+      }
+
+      state.badgeLoading = true;
+      els.badgeViewMeta.textContent = 'Fetching contributor profiles…';
+      els.badgeCardGrid.innerHTML = '<div class="loading">Loading badges…</div>';
+
+      try {
+        const nicknames = [...new Set(state.rows.map(r => r.__nickname).filter(Boolean))];
+        els.badgeContributorCount.textContent = formatAbsInt(nicknames.length);
+        if (!nicknames.length) {
+          state.badgeSummary = { badges: [], heldInstances: 0, contributors: 0, fetchedAt: Date.now() };
+          renderBadgeDashboard();
+          return;
+        }
+
+        const profiles = [];
+        const concurrency = 6;
+        let index = 0;
+        async function worker() {
+          while (index < nicknames.length) {
+            const nick = nicknames[index++];
+            try {
+              const profile = await fetchContributorProfile(nick);
+              if (profile) profiles.push(profile);
+            } catch {}
+          }
+        }
+        await Promise.all(Array.from({ length: Math.min(concurrency, nicknames.length) }, worker));
+
+        const aggregated = aggregateBadgeStats(profiles);
+        state.badgeSummary = {
+          badges: aggregated.badges,
+          heldInstances: aggregated.heldInstances,
+          contributors: profiles.length,
+          fetchedAt: Date.now()
+        };
+        renderBadgeDashboard();
+      } catch (err) {
+        els.badgeViewMeta.textContent = `Badge load failed: ${err.message || err}`;
+        els.badgeCardGrid.innerHTML = '<div class="error">Could not load badge stats.</div>';
+      } finally {
+        state.badgeLoading = false;
+      }
+    }
+
+    function renderBadgeDashboard() {
+      const summary = state.badgeSummary;
+      if (!summary) {
+        els.badgeViewMeta.textContent = 'Waiting for leaderboard sample…';
+        els.badgeCardGrid.innerHTML = '<div class="loading">Load the badge dashboard to see results.</div>';
+        return;
+      }
+
+      els.badgeContributorCount.textContent = formatAbsInt(summary.contributors);
+      els.badgeHeldCount.textContent = formatAbsInt(summary.heldInstances);
+      els.badgeUniqueCount.textContent = formatAbsInt(summary.badges.length);
+      els.badgeViewMeta.textContent = `Updated ${nowText()}`;
+
+      const top = summary.badges[0];
+      if (top) {
+        els.badgeTopName.textContent = top.name;
+        const minted = top.minted != null ? absInt(top.minted) : top.heldCount;
+        const capText = top.cap != null ? `${formatAbsInt(minted)} / ${formatAbsInt(top.cap)}` : formatAbsInt(minted);
+        els.badgeTopMeta.textContent = `${capText} awarded`;
+      } else {
+        els.badgeTopName.textContent = 'Unknown';
+        els.badgeTopMeta.textContent = 'No badges found';
+      }
+
+      if (!summary.badges.length) {
+        els.badgeCardGrid.innerHTML = '<div class="empty">No held badges were found in the sampled contributors.</div>';
+        return;
+      }
+
+      els.badgeCardGrid.innerHTML = summary.badges.map(badge => {
+        const minted = badge.minted != null ? absInt(badge.minted) : badge.heldCount;
+        const countText = badge.cap != null
+          ? `${formatAbsInt(minted)} / ${formatAbsInt(badge.cap)}`
+          : formatAbsInt(minted);
+        const preview = badge.holders.slice(0, 4).map(name => escapeHtml(name)).join(', ');
+        return `
+          <div class="badge-card">
+            <div class="name">${escapeHtml(badge.name)}</div>
+            <div class="count">${countText}</div>
+            <div class="meta">held by ${formatAbsInt(badge.heldCount)} contributor${badge.heldCount === 1 ? '' : 's'}</div>
+            <button class="holders-btn" type="button" data-badge="${escapeHtml(badge.name)}" aria-label="Show all holders for ${escapeHtml(badge.name)}">${preview}${badge.holders.length > 4 ? '…' : ''}</button>
+          </div>
+        `;
+      }).join('');
+      fitAllLiveNumbers();
+    }
+
+    function appendContribLog(message) {
+      state.contrib.log.push(`[${new Date().toLocaleTimeString()}] ${message}`);
+      state.contrib.log = state.contrib.log.slice(-200);
+      els.contribLog.textContent = state.contrib.log.join('\n');
+      els.contribLog.scrollTop = els.contribLog.scrollHeight;
+    }
+
+    function renderContribPreview() {
+      const best = state.contrib.best;
+      if (!best || best.best_correct < 0) {
+        els.contribBestMeta.textContent = 'No results yet';
+        els.contribBestArr.innerHTML = '';
+        return;
+      }
+      els.contribBestMeta.textContent = `${formatAbsInt(best.best_correct)} fixed points at index ${formatAbsInt(best.best_index)}`;
+      const maxValue = Math.max(25, ...(best.best_arr || []), 1);
+      els.contribBestArr.innerHTML = (best.best_arr || []).map((value, index) => {
+        const correct = value === index + 1;
+        const cls = correct ? 'correct' : 'incorrect';
+        const height = Math.max(8, Math.round((value / maxValue) * 100));
+        return `
+          <div class="array-bar ${cls}" title="Position ${index + 1}, value ${value}">
+            <span class="num">${value}</span>
+            <div class="bar" style="height:${height}%;"></div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    const XORO_MASK64 = (1n << 64n) - 1n;
+    const XORO_STEP = 0x9e3779b97f4a7c15n;
+    const SPLIT_A = 0xbf58476d1ce4e5b9n;
+    const SPLIT_B = 0x94d049bb133111ebn;
+
+    function splitmix64(state) {
+      state = (state + XORO_STEP) & XORO_MASK64;
+      let z = state;
+      z = ((z ^ (z >> 30n)) * SPLIT_A) & XORO_MASK64;
+      z = ((z ^ (z >> 27n)) * SPLIT_B) & XORO_MASK64;
+      z = z ^ (z >> 31n);
+      return { state, value: z & XORO_MASK64 };
+    }
+
+    function xseed(seed64) {
+      let state = BigInt.asUintN(64, seed64);
+      const a = splitmix64(state); state = a.state;
+      const b = splitmix64(state); state = b.state;
+      const s = [
+        Number(a.value & 0xffffffffn) >>> 0,
+        Number((a.value >> 32n) & 0xffffffffn) >>> 0,
+        Number(b.value & 0xffffffffn) >>> 0,
+        Number((b.value >> 32n) & 0xffffffffn) >>> 0
+      ];
+      if (s[0] === 0 && s[1] === 0 && s[2] === 0 && s[3] === 0) s[0] = 1;
+      return s;
+    }
+
+    function rotl32(x, k) {
+      return ((x << k) | (x >>> (32 - k))) >>> 0;
+    }
+
+    function xoshiroNext(s) {
+      const result = (rotl32((s[0] + s[3]) >>> 0, 7) + s[0]) >>> 0;
+      const t = (s[1] << 9) >>> 0;
+      s[2] ^= s[0]; s[3] ^= s[1]; s[1] ^= s[2]; s[0] ^= s[3];
+      s[2] ^= t; s[3] = rotl32(s[3], 11);
+      return result >>> 0;
+    }
+
+    function xint(s, max) {
+      const thr = (0x100000000 % max) >>> 0;
+      while (true) {
+        const x = xoshiroNext(s);
+        if (x >= thr) return x % max;
+      }
+    }
+
+    function shuffleSeed(seed64, index) {
+      return (BigInt.asUintN(64, seed64) + (BigInt(index) * XORO_STEP)) & XORO_MASK64;
+    }
+
+    function oneShuffle(seed64, index) {
+      const s = xseed(shuffleSeed(seed64, index));
+      const arr = Array.from({ length: 25 }, (_, i) => i + 1);
+      for (let i = 24; i >= 1; i -= 1) {
+        const j = xint(s, i + 1);
+        const tmp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = tmp;
+      }
+      let correct = 0;
+      for (let i = 0; i < arr.length; i += 1) {
+        if (arr[i] === i + 1) correct += 1;
+      }
+      return { correct, arr };
+    }
+
+    function runRange(seed64, lo, hi) {
+      let best_correct = -1;
+      let best_arr = [];
+      let best_index = lo;
+      const start = Number(lo);
+      const end = Number(hi);
+      for (let i = start; i < end; i += 1) {
+        const result = oneShuffle(seed64, i);
+        if (result.correct > best_correct) {
+          best_correct = result.correct;
+          best_arr = result.arr.slice();
+          best_index = i;
+        }
+      }
+      return { best_correct, best_arr, best_index };
+    }
+
+    function updateContribStatus(title, sub) {
+      els.contribStatus.textContent = title;
+      els.contribStatusSub.textContent = sub;
+    }
+
+    function contribApplySettings() {
+      state.contrib.wsUrl = String(els.contribWsUrl.value || '').trim() || 'wss://bogo.swapjs.dev/ws';
+      state.contrib.uuid = String(els.contribUuid.value || '').trim();
+      state.contrib.nickname = String(els.contribNick.value || '').trim();
+      state.contrib.code = String(els.contribCode.value || '').trim();
+      state.contrib.chunkSize = Math.max(1, Number(els.contribChunk.value) || 8000000);
+      state.contrib.reportEveryMs = Math.max(250, Number(els.contribInterval.value) || 1000);
+    }
+
+    function contribStop() {
+      state.contrib.running = false;
+      if (state.contrib.socket) {
+        try { state.contrib.socket.close(); } catch {}
+      }
+      state.contrib.socket = null;
+      state.contrib.connected = false;
+      updateContribStatus('Stopped', 'Client is idle.');
+      appendContribLog('stopped');
+    }
+
+    async function contribReport(socket) {
+      if (!state.contrib.best || state.contrib.best.best_correct < 0) return;
+      const payload = {
+        type: 'result',
+        seed: String(state.contrib.seed),
+        total_done: Math.floor(state.contrib.total),
+        best_correct: state.contrib.best.best_correct,
+        best_arr: state.contrib.best.best_arr,
+        best_index: state.contrib.best.best_index
+      };
+      socket.send(JSON.stringify(payload));
+      state.contrib.lastReportAt = performance.now();
+      appendContribLog(`sent result: total=${payload.total_done}, best=${payload.best_correct}, index=${payload.best_index}`);
+    }
+
+    async function contribProcessChunk(socket) {
+      if (!state.contrib.running || state.contrib.seed === null) return;
+      const start = Number(state.contrib.cursor);
+      const end = Math.min(Number(state.contrib.count), start + state.contrib.chunkSize);
+      if (end <= start) return;
+      const best = runRange(state.contrib.seed, start, end);
+      if (!state.contrib.best || best.best_correct > state.contrib.best.best_correct) {
+        state.contrib.best = best;
+        renderContribPreview();
+      }
+      state.contrib.cursor = BigInt(end);
+      state.contrib.total += (end - start);
+
+      const now = performance.now();
+      if (!state.contrib.lastReportAt || now - state.contrib.lastReportAt >= state.contrib.reportEveryMs) {
+        await contribReport(socket);
+      }
+    }
+
+    function contribStart() {
+      contribApplySettings();
+      if (!state.contrib.uuid || !state.contrib.nickname) {
+        updateContribStatus('Missing fields', 'UUID and nickname are required.');
+        appendContribLog('fill uuid + nickname first');
+        return;
+      }
+
+      if (state.contrib.socket) {
+        try { state.contrib.socket.close(); } catch {}
+      }
+      state.contrib.running = true;
+      state.contrib.best = { best_correct: -1, best_arr: [], best_index: 0 };
+      state.contrib.total = 0;
+      state.contrib.cursor = 0n;
+      state.contrib.seed = null;
+      state.contrib.lastReportAt = 0;
+      state.contrib.log = [];
+      els.contribLog.textContent = '';
+      renderContribPreview();
+
+      const socket = new WebSocket(state.contrib.wsUrl);
+      state.contrib.socket = socket;
+      updateContribStatus('Connecting…', state.contrib.wsUrl);
+      appendContribLog(`connecting to ${state.contrib.wsUrl}`);
+
+      socket.onopen = () => {
+        state.contrib.connected = true;
+        const hello = {
+          type: 'hello',
+          v: 5,
+          uuid: state.contrib.uuid,
+          nickname: state.contrib.nickname,
+          code: state.contrib.code || ''
+        };
+        socket.send(JSON.stringify(hello));
+        updateContribStatus('Socket open', 'Hello sent, waiting for welcome/job.');
+        appendContribLog('sent hello');
+      };
+
+      socket.onmessage = async (event) => {
+        let msg = null;
+        try { msg = JSON.parse(event.data); } catch { return; }
+        if (!msg || typeof msg !== 'object') return;
+
+        if (msg.type === 'welcome') {
+          if (msg.code) {
+            state.contrib.code = String(msg.code);
+            els.contribCode.value = state.contrib.code;
+          }
+          appendContribLog(`welcome: ${msg.nickname || state.contrib.nickname}`);
+        } else if (msg.type === 'job') {
+          state.contrib.seed = BigInt(msg.seed);
+          state.contrib.count = BigInt(msg.count);
+          state.contrib.cursor = 0n;
+          state.contrib.total = 0;
+          state.contrib.best = { best_correct: -1, best_arr: [], best_index: 0 };
+          renderContribPreview();
+          updateContribStatus('Working', `seed ${msg.seed}, count ${msg.count}`);
+          appendContribLog(`job: seed=${msg.seed} count=${msg.count}`);
+          const loop = async () => {
+            if (!state.contrib.running || socket.readyState !== WebSocket.OPEN || state.contrib.seed === null) return;
+            await contribProcessChunk(socket);
+            if (!state.contrib.running) return;
+            if (state.contrib.cursor < state.contrib.count) {
+              setTimeout(loop, 0);
+            } else {
+              appendContribLog('lease exhausted, waiting for next job');
+            }
+          };
+          loop();
+        } else if (msg.type === 'credited') {
+          appendContribLog(`credited: +${msg.credit ?? 0}`);
+          updateContribStatus('Credited', `lifetime ${msg.lifetime_shuffles ?? 'n/a'}`);
+        } else if (msg.type === 'rejected') {
+          appendContribLog(`rejected: ${msg.reason || 'unknown'}`);
+          updateContribStatus('Rejected', msg.reason || 'unknown');
+        } else if (msg.type === 'client_outdated') {
+          appendContribLog('client_outdated');
+          updateContribStatus('Outdated', 'Update the client protocol.');
+        } else if (msg.type === 'contributions_closed') {
+          appendContribLog('contributions_closed');
+          updateContribStatus('Closed', 'The operator paused new work.');
+        } else if (msg.type === 'banned') {
+          appendContribLog(`banned: ${msg.reason || 'unknown'}`);
+          updateContribStatus('Banned', msg.reason || 'unknown');
+        }
+      };
+
+      socket.onclose = () => {
+        state.contrib.connected = false;
+        if (state.contrib.running) {
+          updateContribStatus('Disconnected', 'Socket closed.');
+          appendContribLog('socket closed');
+        }
+      };
+
+      socket.onerror = () => {
+        updateContribStatus('Error', 'Socket error.');
+      };
+    }
+
+    async function resolveBadgeViewIfVisible(force = false) {
+      if (state.mainView === 'badges') {
+        await loadBadgeStats(force);
+      }
     }
 
     /* ── websocket value parsing ───────────────────────────────── */
@@ -1157,26 +2414,67 @@
     }
 
     /* ── view / search ─────────────────────────────────────────── */
-    function setView(view) {
+    function setLeaderboardView(view) {
       state.view = view;
       els.tabScore.classList.toggle('active', view === 'score');
       els.tabShuffles.classList.toggle('active', view === 'shuffle');
       els.tabBestArray.classList.toggle('active', view === 'stats');
-      els.leaderboardWrap.hidden = view === 'stats';
-      els.statsPanel.hidden = view !== 'stats';
+      animateSectionVisibility(els.leaderboardWrap, view !== 'stats');
+      animateSectionVisibility(els.statsPanel, view === 'stats');
       if (view === 'stats') {
         renderStats();
       } else {
         renderRows();
       }
+      fitAllLiveNumbers();
     }
 
-    els.tabScore.addEventListener('click', () => setView('score'));
-    els.tabShuffles.addEventListener('click', () => setView('shuffle'));
-    els.tabBestArray.addEventListener('click', () => setView('stats'));
+    els.tabScore.addEventListener('click', () => setLeaderboardView('score'));
+    els.tabShuffles.addEventListener('click', () => setLeaderboardView('shuffle'));
+    els.tabBestArray.addEventListener('click', () => setLeaderboardView('stats'));
+
+    els.viewStatsBtn.addEventListener('click', () => setViewState('stats'));
+    els.viewBadgesBtn.addEventListener('click', () => setViewState('badges'));
+    els.viewContributeBtn.addEventListener('click', () => setViewState('contribute'));
+    els.viewSettingsBtn.addEventListener('click', () => setViewState('settings'));
+
+    els.badgeRefreshBtn.addEventListener('click', () => loadBadgeStats(true));
+    els.profileRefreshBtn.addEventListener('click', refreshActiveProfile);
+    els.profileCloseBtn.addEventListener('click', closeProfileModal);
+    els.profileModal.addEventListener('click', (event) => {
+      if (event.target === els.profileModal) closeProfileModal();
+    });
+    els.badgeHoldersCloseBtn.addEventListener('click', closeBadgeHoldersModal);
+    els.badgeHoldersModal.addEventListener('click', (event) => {
+      if (event.target === els.badgeHoldersModal) closeBadgeHoldersModal();
+    });
+    els.badgeCardGrid.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-badge]');
+      if (!btn) return;
+      openBadgeHoldersModal(btn.dataset.badge);
+    });
+    els.badgeHoldersList.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-nickname]');
+      if (!btn) return;
+      const nickname = btn.dataset.nickname;
+      closeBadgeHoldersModal();
+      showContributorModal(nickname, true);
+    });
+    els.leaderboardRows.addEventListener('click', (event) => {
+      const row = event.target.closest('.list-row');
+      if (!row) return;
+      const key = row.dataset.key;
+      const data = state.rows.find(item => item.__key === key);
+      if (data) showContributorModal(data.__nickname);
+    });
+
     els.searchInput.addEventListener('input', () => {
-      state.search = els.searchInput.value;
-      renderRows();
+      clearTimeout(state.searchTimer);
+      const value = els.searchInput.value;
+      state.searchTimer = setTimeout(() => {
+        state.search = value;
+        scheduleRenderRows();
+      }, 80);
     });
 
     els.refreshBtn.addEventListener('click', async () => {
@@ -1185,21 +2483,61 @@
       finally { els.refreshBtn.disabled = false; }
     });
 
-    els.animToggle.addEventListener('click', () => {
-      setAnimationsEnabled(!state.animations);
-      renderRows();
-      renderStats();
-      updateSummary();
+    if (els.themeSelect) {
+      els.themeSelect.addEventListener('change', () => applyTheme(els.themeSelect.value));
+    }
+    if (els.fontSelect) {
+      els.fontSelect.addEventListener('change', () => applyFont(els.fontSelect.value));
+    }
+    if (els.settingsAnimToggle) {
+      els.settingsAnimToggle.addEventListener('click', () => {
+        setSettingsAnimations(!state.animations);
+        renderRows();
+        renderStats();
+        updateSummary(true);
+        fitAllLiveNumbers();
+      });
+    }
+
+    if (els.profileAutoUpdateToggle) {
+      els.profileAutoUpdateToggle.addEventListener('click', () => {
+        setProfileAutoUpdate(!state.profileAutoUpdate);
+      });
+    }
+
+    if (els.profileAutoUpdateInterval) {
+      els.profileAutoUpdateInterval.addEventListener('input', () => {
+        const val = Math.max(0.25, Math.min(2.5, parseFloat(els.profileAutoUpdateInterval.value) || 1));
+        state.profileAutoUpdateIntervalSec = val;
+        if (els.profileAutoUpdateIntervalLabel) els.profileAutoUpdateIntervalLabel.textContent = val.toFixed(2);
+        savePreference('bogostats.profileAutoUpdateInterval', String(val));
+        if (state.profileAutoUpdate) startProfileAutoUpdate();
+      });
+    }
+
+    els.contribStartBtn.addEventListener('click', contribStart);
+    els.contribStopBtn.addEventListener('click', contribStop);
+    [els.contribWsUrl, els.contribUuid, els.contribNick, els.contribCode, els.contribChunk, els.contribInterval].forEach(input => {
+      input.addEventListener('change', contribApplySettings);
+      input.addEventListener('input', contribApplySettings);
     });
+
+    window.addEventListener('resize', fitAllLiveNumbers);
 
     /* ── init ──────────────────────────────────────────────────── */
     (async function init() {
-      setAnimationsEnabled(true);
+      loadSettings();
+      syncSettingsControls();
+      contribApplySettings();
+      renderContribPreview();
+      setViewState('stats');
       await Promise.all([loadLeaderboard(), loadStats()]);
       connectWs();
       startPolling();
       renderRows();
       renderStats();
+      updateSummary(true);
+      fitAllLiveNumbers();
       // 1-second tick for all live values
       setInterval(() => {
         updateSummary();
