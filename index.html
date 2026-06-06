@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bogostats beta-v1.2</title>
+  <title>bogostats beta-v1.2.1</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -335,6 +335,14 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       .list-head,.list-row{grid-template-columns:42px 1.4fr 1fr}
       .hide-sm{display:none}
     }
+    @media (max-width:500px){
+      .settings-grid,
+      .badge-dashboard-top,
+      .badge-card-grid,
+      .contribute-grid,
+      .profile-grid,
+      .field-grid{grid-template-columns:repeat(1,minmax(0,1fr))}
+    }
   </style>
 </head>
 <body>
@@ -342,7 +350,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
     <div class="topbar">
       <div class="brand">
         <h1><span class="brand-bogo">bogo</span><span class="brand-stats">stats.</span></h1>
-        <p class="version">beta-v1.2</p>
+        <p class="version">beta-v1.2.1</p>
         <p class="brand-desc">25 elements, being checked by an api and websocket.</p>
       </div>
       <div class="top-actions">
@@ -1274,7 +1282,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       const total = sorted.reduce((sum, row) => sum + absInt(row.__score), 0);
       if (!total) return 0;
       const top10 = sorted.slice(0, 10).reduce((sum, row) => sum + absInt(row.__score), 0);
-      return Math.round((top10 / total) * 100);
+      return (top10 / total) * 100;
     }
 
     function leaderboardGap(rows, mode) {
