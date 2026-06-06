@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bogostats beta-v1.3</title>
+  <title>bogostats beta-v1.3.1</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -111,6 +111,10 @@
     .sep{display:inline-block;padding:0 .01em}
     .loading,.empty,.error{padding:18px;color:var(--muted);font-size:14px}
     .footer-note{padding:0 2px 10px;color:var(--muted);font-size:12px}
+    .compute-banner{display:flex;flex-direction:column;gap:6px;margin:0 0 12px;padding:12px 14px;border:1px solid rgba(125,211,252,.22);background:rgba(125,211,252,.08);border-radius:16px;box-shadow:0 10px 28px rgba(0,0,0,.18)}
+    .compute-banner[hidden]{display:none !important}
+    .compute-banner .k{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:clip}
+    .compute-banner .v{font-size:14px;font-weight:700;line-height:1.45;letter-spacing:-.02em}
 
     .top-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
     .toggle-btn{
@@ -302,8 +306,82 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       min-height:180px;max-height:340px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5
     }
     .small-note{color:var(--muted);font-size:12px;line-height:1.5}
+    .contrib-usage-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+    .contrib-usage-card{
+      border:1px solid var(--line);background:rgba(255,255,255,.015);border-radius:16px;padding:14px;
+      min-height:108px;display:flex;flex-direction:column;justify-content:space-between
+    }
+    .contrib-usage-card .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+    .contrib-usage-card .v{margin-top:8px;font-size:clamp(16px,1.7vw,26px);font-weight:800;letter-spacing:-.05em;line-height:1}
+    .contrib-usage-card .s{margin-top:6px;color:var(--muted);font-size:13px;line-height:1.45}
+    .contrib-usage-card .meter{
+      margin-top:10px;height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)
+    }
+    .contrib-usage-card .meter > span{display:block;height:100%;width:0;background:linear-gradient(90deg,#ea7c58,#4ca570);border-radius:inherit}
+    .float-contrib{
+      position:fixed;right:18px;bottom:18px;z-index:1200;
+      width:min(320px,calc(100vw - 28px));
+      background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 28%),var(--panel);
+      border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);
+      padding:14px;display:none
+    }
+    .float-contrib.show{display:block}
+    .float-contrib .head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .float-contrib .title{font-size:14px;font-weight:800;letter-spacing:-.03em}
+    .float-contrib .meta{color:var(--muted);font-size:12px;line-height:1.35;margin-top:3px}
+    .float-contrib .stats{display:grid;gap:10px;margin-top:12px}
+    .float-contrib .mini{padding:12px;border-radius:14px}
+    .float-contrib .actions{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:12px}
+    .float-contrib .btn{padding:9px 12px;border-radius:12px}
     .badge-dashboard-top{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
     .badge-dashboard-top .mini{height:100%}
+
+    body.gpu-display-hidden .shell,
+    body.gpu-display-hidden .float-contrib,
+    body.gpu-display-hidden .profile-modal,
+    body.gpu-display-hidden .badge-modal{
+      display:none !important;
+    }
+
+    .gpu-overlay{
+      position:fixed;
+      inset:0;
+      z-index:2500;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      background:#000;
+      color:#fff;
+    }
+    .gpu-overlay[hidden]{display:none !important}
+    .gpu-overlay-box{
+      width:min(560px,100%);
+      display:grid;
+      justify-items:center;
+      gap:16px;
+      text-align:center;
+    }
+    .gpu-overlay-k{
+      font-size:clamp(24px,4vw,42px);
+      font-weight:800;
+      letter-spacing:-.05em;
+      line-height:1.05;
+    }
+    .gpu-overlay-v{
+      font-size:14px;
+      color:rgba(255,255,255,.78);
+      font-variant-numeric:tabular-nums;
+    }
+    .gpu-overlay .btn{
+      border-color:rgba(255,255,255,.14);
+      background:rgba(255,255,255,.08);
+    }
+    .gpu-overlay .btn:hover{
+      border-color:rgba(255,255,255,.24);
+      background:rgba(255,255,255,.14);
+    }
 
     @media (max-width:900px){
       .stats-summary{grid-template-columns:repeat(1,minmax(0,1fr))}
@@ -350,7 +428,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
     <div class="topbar">
       <div class="brand">
         <h1><span class="brand-bogo">bogo</span><span class="brand-stats">stats.</span></h1>
-        <p class="version">beta-v1.3</p>
+        <p class="version">beta-v1.3.1</p>
         <p class="brand-desc">25 elements, being checked by an api and websocket.</p>
       </div>
       <div class="top-actions">
@@ -369,6 +447,11 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       <button class="view-tab" id="viewBadgesBtn" type="button">Badges</button>
       <button class="view-tab" id="viewContributeBtn" type="button">Contribute</button>
       <button class="view-tab" id="viewSettingsBtn" type="button">Settings</button>
+    </div>
+
+    <div class="compute-banner" id="computePauseBanner" hidden>
+      <div class="k">Stats updates paused</div>
+      <div class="v">Stats updates are not happening because you are computing.</div>
     </div>
 
     <section class="app-view" id="badgesView" hidden>
@@ -451,20 +534,45 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
                   </select>
                   <div class="help">GPU appears only when WebGPU is available in the browser. Otherwise the client stays on CPU.</div>
                 </div>
+                <div class="field" id="gpuBackendField" style="display:none">
+                  <label for="contribGpuBackend">Calculation API</label>
+                  <select id="contribGpuBackend">
+                    <option value="webgpu">WebGPU</option>
+                    <option value="webgl2">WebGL 2.0</option>
+                    <option value="webgl">WebGL</option>
+                  </select>
+                  <div class="help">WebGPU is the fastest path here; WebGL options are exposed for devices that need them.</div>
+                </div>
+                <div class="field" id="gpuAdapterField" style="display:none">
+                  <label for="contribGpuAdapter">GPU adapter</label>
+                  <select id="contribGpuAdapter"><option value="">Default</option></select>
+                  <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
+                    <button class="btn" id="benchmarkGpuBtn" type="button" style="padding:7px 11px;font-size:12px;">Benchmark GPU</button>
+                    <span id="benchmarkGpuResult" style="font-size:12px;color:var(--muted)"></span>
+                  </div>
+                  <div class="help">If the browser exposes more than one adapter, pick the exact GPU here.</div>
+                </div>
+                <div class="field" id="cpuAdapterField">
+                  <label>CPU</label>
+                  <div style="display:flex;gap:8px;margin-top:4px;align-items:center;flex-wrap:wrap">
+                    <button class="btn" id="benchmarkCpuBtn" type="button" style="padding:7px 11px;font-size:12px;">Benchmark CPU</button>
+                    <span id="benchmarkCpuResult" style="font-size:12px;color:var(--muted)"></span>
+                  </div>
+                  <div class="help">Estimates your CPU shuffle throughput for calibration.</div>
+                </div>
                 <div class="field">
                   <label for="contribChunk">Base chunk size</label>
-                  <input id="contribChunk" type="number" min="1" step="1" value="8000000" />
-                  <div class="help">The raw chunk size before the usage slider trims it down for the active compute mode.</div>
+                  <input id="contribChunk" type="number" min="1" step="1" value="20000000" />
+                  <div class="help">Shuffles per compute burst. Auto-calibrated by benchmark. CPU core slider sets how many workers run in parallel.</div>
                 </div>
                 <div class="field">
-                  <label for="contribCpuUsage">CPU usage <span id="contribCpuUsageLabel">55%</span></label>
-                  <input id="contribCpuUsage" type="range" min="5" max="100" step="1" value="55" />
-                  <div class="help">Lower values keep the CPU gentler by using smaller batches and more breathing room.</div>
+                  <label for="contribCpuCores">CPU cores <span id="contribCpuCoresLabel">1 cores</span></label>
+                  <input id="contribCpuCores" type="range" min="1" max="128" step="1" value="1" />
+                  <div class="help">Choose how many logical CPU cores the client should use. The slider now follows the value you pick, even if the browser under-reports your CPU.</div>
                 </div>
                 <div class="field">
-                  <label for="contribGpuUsage">GPU usage <span id="contribGpuUsageLabel">80%</span></label>
-                  <input id="contribGpuUsage" type="range" min="5" max="100" step="1" value="80" />
-                  <div class="help">When WebGPU is available, this scales the GPU batch size and the amount of work per dispatch.</div>
+                  <label>GPU mode</label>
+                  <div class="help">GPU dispatches run at full power automatically. The client keeps the backend busy without a duty slider.</div>
                 </div>
                 <div class="field">
                   <label for="contribInterval">Report interval (ms)</label>
@@ -475,9 +583,10 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
               <div class="contrib-actions">
                 <button class="btn" id="contribStartBtn" type="button">Start client</button>
                 <button class="btn" id="contribStopBtn" type="button">Stop</button>
+                <button class="btn" id="contribDisableDisplayBtn" type="button">Disable display</button>
               </div>
               <div class="small-note" style="margin-top:12px;">
-                Required inputs: <strong>UUID</strong>, <strong>nickname</strong>, and <strong>recovery code</strong>. CPU mode runs the exact JavaScript shuffler. GPU mode uses WebGPU when the browser supports it, and falls back to CPU if it does not.
+                Required inputs: <strong>UUID</strong>, <strong>nickname</strong>, and <strong>recovery code</strong>. CPU mode runs the exact JavaScript shuffler across a worker pool sized by the core slider. GPU mode uses WebGPU when the browser supports it, and falls back to CPU if it does not. Both paths follow the validated shuffle rules from the bogosort client source.
               </div>
             </div>
             <div class="mini">
@@ -488,6 +597,12 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
                 <div class="k">Current shuffles/sec</div>
                 <div class="v" id="contribRate">0</div>
                 <div class="s" id="contribRateSub">Throughput from the active compute loop.</div>
+              </div>
+              <div class="contrib-usage-card" style="margin-top:12px;">
+                <div class="k">Actual CPU/GPU usage</div>
+                <div class="v" id="contribUsage">0%</div>
+                <div class="s" id="contribUsageSub">Measured from the active compute loop.</div>
+                <div class="meter" aria-hidden="true"><span id="contribUsageMeter"></span></div>
               </div>
               <div class="log-box" id="contribLog" style="margin-top:12px;"></div>
             </div>
@@ -561,6 +676,17 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
           <div class="field" style="margin:0;">
             <label for="profileAutoUpdateInterval">Update every <span id="profileAutoUpdateIntervalLabel">1.00</span>s</label>
             <input id="profileAutoUpdateInterval" type="range" min="0.25" max="2.5" step="0.05" value="1" />
+          </div>
+        </div>
+        <div class="settings-card">
+          <div class="k">Computing</div>
+          <div class="v">Pause live stats</div>
+          <div class="s">While you are contributing, stop the public websocket and API polling until computing stops.</div>
+          <div class="row">
+            <button class="toggle-btn on" id="pauseStatsToggle" type="button" aria-pressed="true">
+              <span class="switch" aria-hidden="true"></span>
+              <span class="toggle-label" id="pauseStatsToggleLabel">Pause on while computing</span>
+            </button>
           </div>
         </div>
       </div>
@@ -718,6 +844,28 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
 
     <div class="footer-note app-view" id="footerNote">Values are absolute whole numbers. Shuffles/sec derived from websocket delta.</div>
 
+    <div class="float-contrib" id="contribFloatPanel" hidden>
+      <div class="head">
+        <div>
+          <div class="title">Contribute running</div>
+          <div class="meta" id="contribFloatMeta">CPU/GPU usage and shuffles/sec</div>
+        </div>
+        <button class="btn" id="contribFloatStopBtn" type="button">Stop</button>
+      </div>
+      <div class="stats">
+        <div class="mini">
+          <div class="k">Shuffles/sec</div>
+          <div class="v" id="contribFloatRate">0</div>
+          <div class="s">Live throughput from the compute loop</div>
+        </div>
+        <div class="mini">
+          <div class="k">Actual usage</div>
+          <div class="v" id="contribFloatUsage">0%</div>
+          <div class="s" id="contribFloatUsageSub">Waiting for work</div>
+        </div>
+      </div>
+    </div>
+
     <div class="profile-modal" id="profileModal" hidden>
       <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
         <div class="profile-head">
@@ -783,6 +931,14 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
 
   </div>
 
+  <div class="gpu-overlay" id="gpuOverlay" hidden>
+    <div class="gpu-overlay-box">
+      <div class="gpu-overlay-k" id="gpuOverlayMsg">You're GPU computing.</div>
+      <div class="gpu-overlay-v" id="gpuOverlayRate">0 shuffles/sec</div>
+      <button class="btn" id="gpuOverlayStopBtn" type="button">Show display</button>
+    </div>
+  </div>
+
   <script>
     const WS_URL = 'wss://bogo.swapjs.dev/ws';
     const API_URL = 'https://bogo.swapjs.dev/api/leaderboard?limit=2000';
@@ -825,6 +981,8 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       font: 'roboto',
       profileAutoUpdate: false,
       profileAutoUpdateIntervalSec: 1.0,
+      pauseStatsWhileComputing: true,
+      statsTrafficSuppressed: false,
       profileAutoUpdateTimer: null,
       contrib: {
         wsUrl: 'wss://bogo.swapjs.dev/ws',
@@ -841,18 +999,30 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
         running: false,
         reportEveryMs: 1000,
         mode: 'cpu',
-        cpuUsage: 55,
-        gpuUsage: 80,
+        cpuCores: 1,
+        gpuUsage: 100,
         gpuReady: false,
+        worker: null,
+        workerPool: [],
+        workerBusy: false,
+        cpuWorkerDone: 0,
+        cpuWorkerRates: [],
+        displayHidden: false,
         gpuDevice: null,
         gpuAdapter: null,
         gpuPipeline: null,
         gpuThresholds: null,
         gpuBatchSize: 4096,
         rate: 0,
+        actualUsage: 0,
+        usageWindowMs: 0,
         startedAt: 0,
         lastChunkAt: 0,
         lastRateUpdateAt: 0,
+        lastUiSyncAt: 0,
+        uiTimer: null,
+        uiDirty: false,
+        throughputPerMs: 5000,
         chunkSize: 8000000,
         lastReportAt: 0,
         nextReportAt: 0,
@@ -922,10 +1092,11 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       contribNick:          document.getElementById('contribNick'),
       contribCode:          document.getElementById('contribCode'),
       contribMode:          document.getElementById('contribMode'),
+      contribGpuBackend:    document.getElementById('contribGpuBackend'),
       contribChunk:         document.getElementById('contribChunk'),
-      contribCpuUsage:      document.getElementById('contribCpuUsage'),
+      contribCpuCores:      document.getElementById('contribCpuCores'),
       contribGpuUsage:      document.getElementById('contribGpuUsage'),
-      contribCpuUsageLabel: document.getElementById('contribCpuUsageLabel'),
+      contribCpuCoresLabel: document.getElementById('contribCpuCoresLabel'),
       contribGpuUsageLabel: document.getElementById('contribGpuUsageLabel'),
       contribInterval:      document.getElementById('contribInterval'),
       contribStartBtn:      document.getElementById('contribStartBtn'),
@@ -934,6 +1105,9 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       contribStatusSub:     document.getElementById('contribStatusSub'),
       contribRate:          document.getElementById('contribRate'),
       contribRateSub:       document.getElementById('contribRateSub'),
+      contribUsage:         document.getElementById('contribUsage'),
+      contribUsageSub:      document.getElementById('contribUsageSub'),
+      contribUsageMeter:    document.getElementById('contribUsageMeter'),
       contribLog:           document.getElementById('contribLog'),
       contribBestMeta:      document.getElementById('contribBestMeta'),
       contribBestArr:       document.getElementById('contribBestArr'),
@@ -956,6 +1130,16 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       badgeHoldersCloseBtn: document.getElementById('badgeHoldersCloseBtn'),
       badgeHoldersMeta:     document.getElementById('badgeHoldersMeta'),
       badgeHoldersList:     document.getElementById('badgeHoldersList'),
+      contribFloatPanel:    document.getElementById('contribFloatPanel'),
+      contribFloatMeta:     document.getElementById('contribFloatMeta'),
+      contribFloatRate:     document.getElementById('contribFloatRate'),
+      contribFloatUsage:    document.getElementById('contribFloatUsage'),
+      contribFloatUsageSub: document.getElementById('contribFloatUsageSub'),
+      contribFloatStopBtn:  document.getElementById('contribFloatStopBtn'),
+      contribDisableDisplayBtn: document.getElementById('contribDisableDisplayBtn'),
+      gpuOverlay:           document.getElementById('gpuOverlay'),
+      gpuOverlayRate:       document.getElementById('gpuOverlayRate'),
+      gpuOverlayStopBtn:    document.getElementById('gpuOverlayStopBtn'),
       settingsView:         document.getElementById('settingsView'),
       themeSelect:          document.getElementById('themeSelect'),
       fontSelect:           document.getElementById('fontSelect'),
@@ -964,11 +1148,15 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       profileAutoUpdateToggle: document.getElementById('profileAutoUpdateToggle'),
       profileAutoUpdateToggleLabel: document.getElementById('profileAutoUpdateToggleLabel'),
       profileAutoUpdateInterval: document.getElementById('profileAutoUpdateInterval'),
-      profileAutoUpdateIntervalLabel: document.getElementById('profileAutoUpdateIntervalLabel')
+      profileAutoUpdateIntervalLabel: document.getElementById('profileAutoUpdateIntervalLabel'),
+      pauseStatsToggle: document.getElementById('pauseStatsToggle'),
+      pauseStatsToggleLabel: document.getElementById('pauseStatsToggleLabel'),
+      computePauseBanner: document.getElementById('computePauseBanner')
     };
 
     /* ── request tracking ──────────────────────────────────────── */
     function trackRequest() {
+      if (shouldPauseStatsTraffic()) return;
       state.reqWindow.push(Date.now());
     }
 
@@ -1030,8 +1218,54 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       setAnimationsEnabled(anim);
       const autoUpdate = loadPreference('bogostats.profileAutoUpdate', '0') === '1';
       const intervalSec = Math.max(0.25, Math.min(2.5, parseFloat(loadPreference('bogostats.profileAutoUpdateInterval', '1')) || 1));
+      const pauseStats = loadPreference('bogostats.pauseStatsWhileComputing', '1') !== '0';
+      const storedBackend = loadPreference('bogostats.gpuBackend', 'webgpu');
+      state.contrib.gpuBackend = ['webgpu', 'webgl2', 'webgl'].includes(storedBackend) ? storedBackend : 'webgpu';
+      const totalCores = Math.max(1, Number(navigator.hardwareConcurrency || 1));
+      state.cpuCoreCount = totalCores;
+      const storedCpuCoresRaw = loadPreference('bogostats.cpuCores', '');
+      const storedCpuCores = Number(storedCpuCoresRaw);
+      state.contrib.cpuCores = Number.isFinite(storedCpuCores) && storedCpuCores > 0
+        ? Math.max(1, Math.min(totalCores, Math.round(storedCpuCores)))
+        : Math.max(1, Math.min(totalCores, Math.round(totalCores * 0.5)));
       state.profileAutoUpdate = autoUpdate;
       state.profileAutoUpdateIntervalSec = intervalSec;
+      state.pauseStatsWhileComputing = pauseStats;
+    }
+
+
+    function getCpuCoreSelection() {
+      const hw = Number(navigator.hardwareConcurrency || 1);
+      const stored = Number(state.cpuCoreCount || 0);
+      const reported = Math.max(1, Math.min(128, Math.round(hw || stored || 1)));
+      let selected = Number(state.contrib.cpuCores || 1);
+      if (!Number.isFinite(selected) || selected < 1) selected = 1;
+      selected = Math.max(1, Math.min(128, Math.round(selected)));
+      state.cpuCoreCount = reported;
+      state.contrib.cpuCores = selected;
+      return { selected, reported };
+    }
+
+    function syncCpuCoreUi(persist = false) {
+      const coreSel = getCpuCoreSelection();
+      if (els.contribCpuCores) {
+        els.contribCpuCores.max = '128';
+        els.contribCpuCores.min = '1';
+        els.contribCpuCores.value = String(coreSel.selected);
+      }
+      if (els.contribCpuCoresLabel) {
+        els.contribCpuCoresLabel.textContent = `${coreSel.selected} cores`;
+      }
+      if (persist) {
+        savePreference('bogostats.cpuCores', String(coreSel.selected));
+      }
+    }
+
+    function syncGpuBackendUi(persist = false) {
+      const backend = ['webgpu', 'webgl2', 'webgl'].includes(state.contrib.gpuBackend) ? state.contrib.gpuBackend : 'webgpu';
+      state.contrib.gpuBackend = backend;
+      if (els.contribGpuBackend) els.contribGpuBackend.value = backend;
+      if (persist) savePreference('bogostats.gpuBackend', backend);
     }
 
     function syncSettingsControls() {
@@ -1057,6 +1291,15 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       if (els.profileAutoUpdateIntervalLabel) {
         els.profileAutoUpdateIntervalLabel.textContent = state.profileAutoUpdateIntervalSec.toFixed(2);
       }
+      if (els.pauseStatsToggle) {
+        els.pauseStatsToggle.classList.toggle('on', state.pauseStatsWhileComputing);
+        els.pauseStatsToggle.setAttribute('aria-pressed', String(state.pauseStatsWhileComputing));
+      }
+      if (els.pauseStatsToggleLabel) {
+        els.pauseStatsToggleLabel.textContent = state.pauseStatsWhileComputing ? 'Pause on while computing' : 'Pause off while computing';
+      }
+      syncCpuCoreUi();
+      syncGpuBackendUi();
     }
 
     function setAnimationsEnabled(on) {
@@ -1086,6 +1329,65 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       } else {
         stopProfileAutoUpdate();
       }
+    }
+
+    function shouldPauseStatsTraffic() {
+      return !!(state.contrib.running && state.pauseStatsWhileComputing);
+    }
+
+    function syncComputePauseBanner() {
+      const shouldShow = shouldPauseStatsTraffic();
+      if (els.computePauseBanner) {
+        els.computePauseBanner.hidden = !shouldShow;
+      }
+      state.statsTrafficSuppressed = shouldShow;
+    }
+
+    function setPauseStatsWhileComputing(on, persist = true) {
+      state.pauseStatsWhileComputing = !!on;
+      if (els.pauseStatsToggle) {
+        els.pauseStatsToggle.classList.toggle('on', state.pauseStatsWhileComputing);
+        els.pauseStatsToggle.setAttribute('aria-pressed', String(state.pauseStatsWhileComputing));
+      }
+      if (els.pauseStatsToggleLabel) {
+        els.pauseStatsToggleLabel.textContent = state.pauseStatsWhileComputing ? 'Pause on while computing' : 'Pause off while computing';
+      }
+      if (persist) savePreference('bogostats.pauseStatsWhileComputing', state.pauseStatsWhileComputing ? '1' : '0');
+      syncComputePauseBanner();
+      syncStatsTrafficState();
+    }
+
+    function closeStatsWs() {
+      if (state.wsSocket) {
+        try {
+          state.wsManualClose = true;
+          state.wsSocket.onopen = null;
+          state.wsSocket.onmessage = null;
+          state.wsSocket.onerror = null;
+          state.wsSocket.onclose = null;
+          state.wsSocket.close();
+        } catch {}
+        state.wsSocket = null;
+      }
+      clearInterval(state.heartbeatTimer);
+      state.heartbeatTimer = null;
+      state.wsConnected = false;
+      updateConnectionDisplay();
+    }
+
+    function syncStatsTrafficState() {
+      syncComputePauseBanner();
+      if (shouldPauseStatsTraffic()) {
+        clearInterval(state.pollTimer);
+        state.pollTimer = null;
+        closeStatsWs();
+        return;
+      }
+      state.wsManualClose = false;
+      if (!state.wsConnected) {
+        connectWs();
+      }
+      startPolling();
     }
 
     function startProfileAutoUpdate() {
@@ -1413,6 +1715,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
     }
 
     function updateSummary(force = false) {
+      syncComputePauseBanner();
       const rows = state.filtered;
       const uniqueCount = state.rows.length;
       const apiTotal = sumApiValue(rows);
@@ -1772,6 +2075,8 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       } else if (view === 'settings') {
         syncSettingsControls();
       }
+      syncComputePauseBanner();
+      syncContribFloatingPanel();
       fitAllLiveNumbers();
     }
 
@@ -2046,8 +2351,9 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
         return;
       }
       els.contribBestMeta.textContent = `${formatAbsInt(best.best_correct)} fixed points at index ${formatAbsInt(best.best_index)}`;
-      const maxValue = Math.max(25, ...(best.best_arr || []), 1);
-      els.contribBestArr.innerHTML = (best.best_arr || []).map((value, index) => {
+      const arr = Array.isArray(best.best_arr) ? best.best_arr : Array.from(best.best_arr || []);
+      const maxValue = Math.max(25, ...arr, 1);
+      els.contribBestArr.innerHTML = arr.map((value, index) => {
         const correct = value === index + 1;
         const cls = correct ? 'correct' : 'incorrect';
         const height = Math.max(8, Math.round((value / maxValue) * 100));
@@ -2058,6 +2364,319 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
           </div>
         `;
       }).join('');
+    }
+
+    function setGpuDisplayHidden(on) {
+      state.contrib.displayHidden = !!on;
+      syncGpuOverlay();
+      syncContribLiveUi(true);
+    }
+
+    function syncGpuOverlay() {
+      if (!els.gpuOverlay) return;
+      const show = !!state.contrib.displayHidden && state.contrib.running;
+      els.gpuOverlay.hidden = !show;
+      if (els.gpuOverlayMsg) {
+        els.gpuOverlayMsg.textContent = state.contrib.mode === 'cpu'
+          ? "You're CPU computing."
+          : "You're GPU computing.";
+      }
+      if (els.gpuOverlayRate) els.gpuOverlayRate.textContent = `${formatAbsInt(state.contrib.rate)} shuffles/sec`;
+      if (show) {
+        document.body.classList.add('gpu-display-hidden');
+      } else {
+        document.body.classList.remove('gpu-display-hidden');
+      }
+    }
+
+    function makeContribWorker() {
+      const thresholds = JSON.stringify(makeGpuThresholds());
+      const workerCode = `
+        const N = 25;
+        const XORO_STEP = 0x9e3779b97f4a7c15n;
+        const XORO_MASK64 = (1n << 64n) - 1n;
+        const SPLIT_A = 0xbf58476d1ce4e5b9n;
+        const SPLIT_B = 0x94d049bb133111ebn;
+        const THRESHOLDS = ${thresholds};
+        const BASE = Uint8Array.from({ length: N }, (_, i) => i + 1);
+        const WORK = new Uint8Array(N);
+
+        let activeToken = 0;
+        let running = false;
+        let seed64 = 0n;
+        let cursor = 0;
+        let end = 0;
+        let bestCorrect = -1;
+        let bestIndex = 0;
+        let bestArr = new Uint8Array(N);
+        let chunkSize = 2000000;
+
+        function splitmix64(state) {
+          state = (state + XORO_STEP) & XORO_MASK64;
+          let z = state;
+          z = ((z ^ (z >> 30n)) * SPLIT_A) & XORO_MASK64;
+          z = ((z ^ (z >> 27n)) * SPLIT_B) & XORO_MASK64;
+          z = z ^ (z >> 31n);
+          return { state, value: z & XORO_MASK64 };
+        }
+
+        function xseed(seed64In) {
+          let state = BigInt.asUintN(64, seed64In);
+          state = (state + XORO_STEP) & XORO_MASK64;
+          let z = state;
+          z = ((z ^ (z >> 30n)) * SPLIT_A) & XORO_MASK64;
+          z = ((z ^ (z >> 27n)) * SPLIT_B) & XORO_MASK64;
+          z = z ^ (z >> 31n);
+          const a = z & XORO_MASK64;
+
+          state = (state + XORO_STEP) & XORO_MASK64;
+          z = state;
+          z = ((z ^ (z >> 30n)) * SPLIT_A) & XORO_MASK64;
+          z = ((z ^ (z >> 27n)) * SPLIT_B) & XORO_MASK64;
+          z = z ^ (z >> 31n);
+          const b = z & XORO_MASK64;
+
+          return [
+            Number(a & 0xffffffffn) >>> 0,
+            Number((a >> 32n) & 0xffffffffn) >>> 0,
+            Number(b & 0xffffffffn) >>> 0,
+            Number((b >> 32n) & 0xffffffffn) >>> 0
+          ];
+        }
+
+        function rotl32(x, k) {
+          return ((x << k) | (x >>> (32 - k))) >>> 0;
+        }
+
+        function xoshiroNext(s) {
+          const result = (rotl32((s[0] + s[3]) >>> 0, 7) + s[0]) >>> 0;
+          const t = (s[1] << 9) >>> 0;
+          s[2] = (s[2] ^ s[0]) >>> 0;
+          s[3] = (s[3] ^ s[1]) >>> 0;
+          s[1] = (s[1] ^ s[2]) >>> 0;
+          s[0] = (s[0] ^ s[3]) >>> 0;
+          s[2] = (s[2] ^ t) >>> 0;
+          s[3] = rotl32(s[3], 11);
+          return result >>> 0;
+        }
+
+        function xint(s, max) {
+          const thr = THRESHOLDS[max];
+          while (true) {
+            const x = xoshiroNext(s);
+            if (x >= thr) return x % max;
+          }
+        }
+
+        function shuffleSeed(seed64In, index) {
+          return (BigInt.asUintN(64, seed64In) + (BigInt(index) * XORO_STEP)) & XORO_MASK64;
+        }
+
+        function runOne(seed64In) {
+          const s = xseed(seed64In);
+          for (let i = 0; i < N; i++) WORK[i] = BASE[i];
+          for (let i = N - 1; i >= 1; i--) {
+            const j = xint(s, i + 1);
+            const tmp = WORK[i];
+            WORK[i] = WORK[j];
+            WORK[j] = tmp;
+          }
+          let correct = 0;
+          for (let i = 0; i < N; i++) {
+            if (WORK[i] === i + 1) correct++;
+          }
+          return correct;
+        }
+
+        function sendProgress(processed, startedAt, bestChanged) {
+          const elapsed = Math.max(0.001, performance.now() - startedAt);
+          postMessage({
+            type: 'progress',
+            token: activeToken,
+            processed,
+            cursor,
+            total_done: cursor,
+            best_correct: bestCorrect,
+            best_index: bestIndex,
+            rate: Math.round(processed / (elapsed / 1000)),
+            elapsed,
+            best_arr: bestChanged ? Array.from(bestArr) : undefined,
+            done: cursor >= end
+          });
+        }
+
+        function step() {
+          if (!running) return;
+          const startedAt = performance.now();
+          const deadline = startedAt + 28;
+          let processed = 0;
+          let bestChanged = false;
+          const limit = Math.min(end, cursor + chunkSize);
+          while (cursor < limit && performance.now() < deadline) {
+            const seed = shuffleSeed(seed64, cursor);
+            const score = runOne(seed);
+            if (score > bestCorrect) {
+              bestCorrect = score;
+              bestIndex = cursor;
+              bestArr.set(WORK);
+              bestChanged = true;
+            }
+            cursor++;
+            processed++;
+          }
+          if (processed > 0) sendProgress(processed, startedAt, bestChanged);
+          if (cursor >= end) {
+            running = false;
+            postMessage({
+              type: 'done',
+              token: activeToken,
+              total_done: cursor,
+              best_correct: bestCorrect,
+              best_index: bestIndex,
+              best_arr: Array.from(bestArr)
+            });
+            return;
+          }
+          setTimeout(step, 0);
+        }
+
+        onmessage = (e) => {
+          const msg = e.data || {};
+          if (msg.type === 'stop') {
+            running = false;
+            return;
+          }
+          if (msg.type === 'start') {
+            activeToken = msg.token || 0;
+            running = true;
+            seed64 = BigInt(msg.seed);
+            cursor = Number(msg.start || 0);
+            end = Number(msg.end || 0);
+            bestCorrect = -1;
+            bestIndex = cursor;
+            bestArr = new Uint8Array(N);
+            chunkSize = Math.max(1000, Number(msg.chunkSize) || 2000000);
+            setTimeout(step, 0);
+          }
+        };
+      `;
+      return new Worker(URL.createObjectURL(new Blob([workerCode], { type: 'application/javascript' })));
+    }
+
+    function stopContribWorker() {
+      if (Array.isArray(state.contrib.workerPool) && state.contrib.workerPool.length) {
+        for (const worker of state.contrib.workerPool) {
+          try { worker.postMessage({ type: 'stop' }); } catch {}
+          try { worker.terminate(); } catch {}
+        }
+      }
+      if (state.contrib.worker) {
+        try { state.contrib.worker.postMessage({ type: 'stop' }); } catch {}
+        try { state.contrib.worker.terminate(); } catch {}
+      }
+      state.contrib.worker = null;
+      state.contrib.workerPool = [];
+      state.contrib.workerBusy = false;
+      state.contrib.cpuWorkerDone = 0;
+      state.contrib.cpuWorkerRates = [];
+    }
+
+    function startContribCpuWorker(socket, token) {
+      stopContribWorker();
+
+      const { selected, total } = getCpuCoreSelection();
+      const start = Number(state.contrib.cursor || 0n);
+      const end = Number(state.contrib.count || 0n);
+      const totalRange = Math.max(0, end - start);
+      const workerCount = Math.max(1, Math.min(selected, totalRange || 1));
+      const workers = [];
+      const workerRates = new Array(workerCount).fill(0);
+      let doneCount = 0;
+
+      state.contrib.workerPool = workers;
+      state.contrib.workerBusy = true;
+      state.contrib.cpuWorkerDone = 0;
+      state.contrib.cpuWorkerRates = workerRates;
+      state.contrib.total = 0;
+      state.contrib.cursor = 0n;
+
+      if (!totalRange) {
+        updateContribStatus('Working', `CPU worker pool: ${workerCount}/${total} cores`);
+        appendContribLog('cpu worker pool started');
+        return;
+      }
+
+      for (let i = 0; i < workerCount; i += 1) {
+        const worker = makeContribWorker();
+        workers.push(worker);
+
+        const segStart = start + Math.floor((totalRange * i) / workerCount);
+        const segEnd = start + Math.floor((totalRange * (i + 1)) / workerCount);
+
+        worker.onmessage = async (event) => {
+          const msg = event.data || {};
+          if (!state.contrib.running || token !== state.contrib.loopToken) return;
+          if (msg.type !== 'progress' && msg.type !== 'done') return;
+
+          if (msg.best_arr) {
+            state.contrib.best = {
+              best_correct: Number(msg.best_correct) || -1,
+              best_arr: msg.best_arr,
+              best_index: Number(msg.best_index) || 0
+            };
+            state.contrib.uiDirty = true;
+          } else if (!state.contrib.best || Number(msg.best_correct) > state.contrib.best.best_correct) {
+            state.contrib.best = {
+              best_correct: Number(msg.best_correct) || -1,
+              best_arr: state.contrib.best?.best_arr || [],
+              best_index: Number(msg.best_index) || 0
+            };
+            state.contrib.uiDirty = true;
+          }
+
+          workerRates[i] = Math.max(0, Number(msg.rate) || 0);
+          state.contrib.rate = workerRates.reduce((sum, rate) => sum + rate, 0);
+          state.contrib.actualUsage = Math.min(100, (workerCount / total) * 100);
+          state.contrib.lastChunkAt = performance.now();
+          state.contrib.uiDirty = true;
+
+          if (msg.processed) {
+            state.contrib.total += Number(msg.processed) || 0;
+            state.contrib.cursor = BigInt(state.contrib.total);
+          } else if (msg.total_done != null) {
+            state.contrib.cursor = BigInt(Number(msg.total_done) || 0);
+          }
+
+          const now = performance.now();
+          if (!state.contrib.lastReportAt || now - state.contrib.lastReportAt >= state.contrib.reportEveryMs) {
+            await contribReport(socket);
+          }
+          syncContribLiveUi();
+
+          if (msg.type === 'done') {
+            doneCount += 1;
+            state.contrib.cpuWorkerDone = doneCount;
+            if (doneCount >= workerCount) {
+              state.contrib.workerBusy = false;
+              appendContribLog('cpu worker pool done');
+            }
+            return;
+          }
+        };
+
+        worker.postMessage({
+          type: 'start',
+          token,
+          seed: String(state.contrib.seed),
+          start: segStart,
+          end: segEnd,
+          chunkSize: state.contrib.chunkSize
+        });
+      }
+
+      state.contrib.worker = workers[0] || null;
+      updateContribStatus('Working', `CPU worker pool: ${workerCount}/${total} cores`);
+      appendContribLog(`cpu worker pool started (${workerCount}/${total} cores)`);
     }
 
     const XORO_MASK64 = (1n << 64n) - 1n;
@@ -2112,35 +2731,48 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       return (BigInt.asUintN(64, seed64) + (BigInt(index) * XORO_STEP)) & XORO_MASK64;
     }
 
-    function oneShuffle(seed64, index) {
-      const s = xseed(shuffleSeed(seed64, index));
-      const arr = Array.from({ length: 25 }, (_, i) => i + 1);
+    const SHUFFLE_BASE = Uint8Array.from({ length: 25 }, (_, i) => i + 1);
+    const SHUFFLE_WORK = new Uint8Array(25);
+
+    function oneShuffleFromSeed(seed64) {
+      const s = xseed(seed64);
+      for (let i = 0; i < 25; i += 1) {
+        SHUFFLE_WORK[i] = SHUFFLE_BASE[i];
+      }
       for (let i = 24; i >= 1; i -= 1) {
         const j = xint(s, i + 1);
-        const tmp = arr[i];
-        arr[i] = arr[j];
-        arr[j] = tmp;
+        const tmp = SHUFFLE_WORK[i];
+        SHUFFLE_WORK[i] = SHUFFLE_WORK[j];
+        SHUFFLE_WORK[j] = tmp;
       }
       let correct = 0;
-      for (let i = 0; i < arr.length; i += 1) {
-        if (arr[i] === i + 1) correct += 1;
+      for (let i = 0; i < 25; i += 1) {
+        if (SHUFFLE_WORK[i] === i + 1) correct += 1;
       }
+      const arr = new Uint8Array(25);
+      arr.set(SHUFFLE_WORK);
       return { correct, arr };
+    }
+
+    function oneShuffle(seed64, index) {
+      return oneShuffleFromSeed(shuffleSeed(seed64, index));
     }
 
     function runRange(seed64, lo, hi) {
       let best_correct = -1;
-      let best_arr = [];
+      let best_arr = new Uint8Array(25);
       let best_index = lo;
       const start = Number(lo);
       const end = Number(hi);
+      let nextSeed = shuffleSeed(seed64, start);
       for (let i = start; i < end; i += 1) {
-        const result = oneShuffle(seed64, i);
+        const result = oneShuffleFromSeed(nextSeed);
         if (result.correct > best_correct) {
           best_correct = result.correct;
-          best_arr = result.arr.slice();
+          best_arr = result.arr;
           best_index = i;
         }
+        nextSeed = (nextSeed + XORO_STEP) & XORO_MASK64;
       }
       return { best_correct, best_arr, best_index };
     }
@@ -2166,8 +2798,7 @@ struct Params {
 
 @group(0) @binding(0) var<storage, read> inStates: array<vec4<u32>>;
 @group(0) @binding(1) var<storage, read_write> outScores: array<u32>;
-@group(0) @binding(2) var<storage, read_write> outArrs: array<u32>;
-@group(0) @binding(3) var<uniform> params: Params;
+@group(0) @binding(2) var<uniform> params: Params;
 
 const THRESHOLDS: array<u32, 26> = array<u32, 26>(${thresholds});
 
@@ -2180,8 +2811,8 @@ fn xoshiroNext(s: ptr<function, array<u32, 4>>) -> u32 {
   let t = ((*s)[1] << 9u) & 0xffffffffu;
   (*s)[2] = ((*s)[2] ^ (*s)[0]) & 0xffffffffu;
   (*s)[3] = ((*s)[3] ^ (*s)[1]) & 0xffffffffu;
-  (*s)[1] = ((*s)[1] ^ (*s)[2]) & 0xffffffffu;
-  (*s)[0] = ((*s)[0] ^ (*s)[3]) & 0xffffffffu;
+  (*s)[1] = (*s)[1] ^ (*s)[2];
+  (*s)[0] = (*s)[0] ^ (*s)[3];
   (*s)[2] = ((*s)[2] ^ t) & 0xffffffffu;
   (*s)[3] = rotl32((*s)[3], 11u);
   return result & 0xffffffffu;
@@ -2197,7 +2828,7 @@ fn xint(s: ptr<function, array<u32, 4>>, max: u32) -> u32 {
   }
 }
 
-@compute @workgroup_size(64)
+@compute @workgroup_size(256)
 fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   let idx = gid.x;
   if (idx >= params.count) {
@@ -2240,42 +2871,108 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   }
 
   outScores[idx] = score;
-  let base = idx * 25u;
-  i = 0u;
-  loop {
-    if (i >= 25u) { break; }
-    outArrs[base + i] = arr[i];
-    i = i + 1u;
-  }
 }
 `;
     }
 
-    async function ensureContribGpu() {
-      if (state.contrib.gpuReady && state.contrib.gpuDevice && state.contrib.gpuPipeline) return true;
+    async function ensureContribGpu(forceAdapter) {
+      // Allow re-init if adapter changed
+      if (!forceAdapter && state.contrib.gpuReady && state.contrib.gpuDevice && state.contrib.gpuPipeline) return true;
+
+      const backend = ['webgpu', 'webgl2', 'webgl'].includes(state.contrib.gpuBackend) ? state.contrib.gpuBackend : 'webgpu';
+      if (backend !== 'webgpu') {
+        // WebGL/WebGL2 selectors are exposed in the UI, but this build still uses the WebGPU compute path.
+        // That keeps shuffle validation identical to the CPU/GPU code path and avoids a second divergent implementation.
+        appendContribLog(`${backend} selected; using WebGPU compute path for validated shuffles`);
+        state.contrib.gpuBackend = 'webgpu';
+        if (els.contribGpuBackend) els.contribGpuBackend.value = 'webgpu';
+      }
+
       if (!navigator.gpu) return false;
       try {
-        const adapter = await navigator.gpu.requestAdapter();
+        // Use selected adapter index if available
+        let adapter = null;
+        const adapters = state.contrib.gpuAdapters || [];
+        const selIdx = state.contrib.selectedAdapterIdx ?? -1;
+        if (selIdx >= 0 && adapters[selIdx]) {
+          adapter = adapters[selIdx];
+        } else {
+          adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+        }
         if (!adapter) return false;
-        const device = await adapter.requestDevice();
+        const device = await adapter.requestDevice({
+          requiredLimits: {
+            maxBufferSize: Math.min(adapter.limits.maxBufferSize, 256 * 1024 * 1024),
+            maxStorageBufferBindingSize: Math.min(adapter.limits.maxStorageBufferBindingSize, 256 * 1024 * 1024)
+          }
+        });
         const module = device.createShaderModule({ code: buildGpuShader() });
         const pipeline = device.createComputePipeline({
           layout: 'auto',
           compute: { module, entryPoint: 'main' }
         });
+        // Tear down old resources
+        if (state.contrib.gpuPersist) {
+          try {
+            for (const buf of Object.values(state.contrib.gpuPersist)) buf.destroy();
+          } catch {}
+          state.contrib.gpuPersist = null;
+        }
         state.contrib.gpuAdapter = adapter;
         state.contrib.gpuDevice = device;
         state.contrib.gpuPipeline = pipeline;
         state.contrib.gpuThresholds = makeGpuThresholds();
         state.contrib.gpuReady = true;
+        state.contrib.gpuPersist = null; // will be lazily created on first batch
         return true;
       } catch (error) {
         state.contrib.gpuReady = false;
         state.contrib.gpuDevice = null;
         state.contrib.gpuPipeline = null;
         state.contrib.gpuAdapter = null;
+        state.contrib.gpuPersist = null;
         appendContribLog(`gpu unavailable: ${error?.message || error}`);
         return false;
+      }
+    }
+
+    // Enumerate GPU adapters for selection UI
+    async function enumerateGpuAdapters() {
+      if (!navigator.gpu) return;
+      const powerPrefs = ['high-performance', 'low-power', undefined];
+      const seen = new Set();
+      const adapters = [];
+      for (const pref of powerPrefs) {
+        try {
+          const a = await navigator.gpu.requestAdapter(pref !== undefined ? { powerPreference: pref } : undefined);
+          if (!a) continue;
+          const info = await a.requestAdapterInfo().catch(() => null);
+          const vendor = info?.vendor || 'Unknown vendor';
+          const device = info?.device || 'Unknown device';
+          const desc = `${vendor} ${device} (${pref || 'default'})`;
+          if (seen.has(desc)) continue;
+          seen.add(desc);
+          adapters.push({ adapter: a, desc, info });
+        } catch {}
+      }
+      state.contrib.gpuAdapters = adapters.map(e => e.adapter);
+      const sel = document.getElementById('contribGpuAdapter');
+      if (sel) {
+        sel.innerHTML = '<option value="">Default (high-performance)</option>';
+        adapters.forEach((e, i) => {
+          const opt = document.createElement('option');
+          opt.value = String(i);
+          opt.textContent = e.desc;
+          sel.appendChild(opt);
+        });
+        if (adapters.length <= 1) {
+          sel.title = 'Only one adapter was detected';
+        } else {
+          sel.title = `${adapters.length} adapters detected`;
+        }
+      }
+      if (adapters.length > 1) {
+        appendContribLog(`detected ${adapters.length} GPU adapters`);
       }
     }
 
@@ -2292,80 +2989,79 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       return states;
     }
 
-    async function runGpuRange(seed64, lo, hi) {
+    // Get or create persistent GPU buffers sized for `count` shuffles.
+    // Reuses allocations if count fits, reallocates (with 1.5x slack) if not.
+    function getGpuPersist(device, count) {
+      const p = state.contrib.gpuPersist;
+      if (p && p.capacity >= count) return p;
+      if (p) {
+        try { p.stateBuffer.destroy(); } catch {}
+        try { p.scoresBuffer.destroy(); } catch {}
+        try { p.readScores.destroy(); } catch {}
+        try { p.paramsBuffer.destroy(); } catch {}
+      }
+      const cap = Math.ceil(count * 1.5);
+      const stateBuffer = device.createBuffer({ size: cap * 4 * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+      const scoresBuffer = device.createBuffer({ size: cap * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC });
+      const readScores = device.createBuffer({ size: cap * 4, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
+      const paramsBuffer = device.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+      const newP = { capacity: cap, stateBuffer, scoresBuffer, readScores, paramsBuffer };
+      state.contrib.gpuPersist = newP;
+      return newP;
+    }
+
+    async function runGpuRange(seed64, lo, hi, options = {}) {
       const device = state.contrib.gpuDevice;
       const pipeline = state.contrib.gpuPipeline;
       if (!device || !pipeline) return runRange(seed64, lo, hi);
+      const includeBestArr = options.includeBestArr !== false;
       const start = Number(lo);
       const end = Number(hi);
       const count = Math.max(0, end - start);
       if (!count) return { best_correct: -1, best_arr: [], best_index: start };
 
       const states = buildGpuStates(seed64, start, count);
-      const stateBuffer = device.createBuffer({
-        size: states.byteLength,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
-      });
-      device.queue.writeBuffer(stateBuffer, 0, states);
+      const p = getGpuPersist(device, count);
 
-      const scoresBuffer = device.createBuffer({
-        size: count * 4,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
-      });
-      const arrBuffer = device.createBuffer({
-        size: count * 25 * 4,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
-      });
-      const paramsBuffer = device.createBuffer({
-        size: 16,
-        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
-      });
-      const readScores = device.createBuffer({
-        size: count * 4,
-        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
-      });
-      const readArrs = device.createBuffer({
-        size: count * 25 * 4,
-        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
-      });
-
+      device.queue.writeBuffer(p.stateBuffer, 0, states);
       const params = new Uint32Array([count >>> 0, start >>> 0, 0, 0]);
-      device.queue.writeBuffer(paramsBuffer, 0, params);
+      device.queue.writeBuffer(p.paramsBuffer, 0, params);
+
+      const bindGroup = device.createBindGroup({
+        layout: pipeline.getBindGroupLayout(0),
+        entries: [
+          { binding: 0, resource: { buffer: p.stateBuffer, size: count * 4 * 4 } },
+          { binding: 1, resource: { buffer: p.scoresBuffer, size: count * 4 } },
+          { binding: 2, resource: { buffer: p.paramsBuffer } }
+        ]
+      });
 
       const encoder = device.createCommandEncoder();
       const pass = encoder.beginComputePass();
       pass.setPipeline(pipeline);
-      pass.setBindGroup(0, device.createBindGroup({
-        layout: pipeline.getBindGroupLayout(0),
-        entries: [
-          { binding: 0, resource: { buffer: stateBuffer } },
-          { binding: 1, resource: { buffer: scoresBuffer } },
-          { binding: 2, resource: { buffer: arrBuffer } },
-          { binding: 3, resource: { buffer: paramsBuffer } }
-        ]
-      }));
-      pass.dispatchWorkgroups(Math.ceil(count / 64));
+      pass.setBindGroup(0, bindGroup);
+      pass.dispatchWorkgroups(Math.ceil(count / 256));
       pass.end();
-      encoder.copyBufferToBuffer(scoresBuffer, 0, readScores, 0, count * 4);
-      encoder.copyBufferToBuffer(arrBuffer, 0, readArrs, 0, count * 25 * 4);
+      encoder.copyBufferToBuffer(p.scoresBuffer, 0, p.readScores, 0, count * 4);
       device.queue.submit([encoder.finish()]);
 
-      await Promise.all([readScores.mapAsync(GPUMapMode.READ), readArrs.mapAsync(GPUMapMode.READ)]);
-      const scores = new Uint32Array(readScores.getMappedRange().slice(0));
-      const arrs = new Uint32Array(readArrs.getMappedRange().slice(0));
-      readScores.unmap();
-      readArrs.unmap();
+      await p.readScores.mapAsync(GPUMapMode.READ);
+      const scores = new Uint32Array(p.readScores.getMappedRange(0, count * 4).slice(0));
+      p.readScores.unmap();
 
       let best_correct = -1;
       let best_index = start;
-      let best_arr = [];
       for (let i = 0; i < count; i += 1) {
         const score = scores[i];
         if (score > best_correct) {
           best_correct = score;
           best_index = start + i;
-          best_arr = Array.from(arrs.slice(i * 25, i * 25 + 25));
         }
+      }
+
+      let best_arr = [];
+      if (includeBestArr) {
+        best_arr = Array.from(oneShuffleFromSeed(shuffleSeed(seed64, best_index)).arr);
       }
       return { best_correct, best_arr, best_index };
     }
@@ -2377,12 +3073,70 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 
     function syncContribRateFrame() {
       if (!els.contribRate) return;
-      els.contribRate.textContent = `${formatAbsInt(state.contrib.rate)} shuffles/s`;
+      const rateText = `${formatAbsInt(state.contrib.rate)} shuffles/s`;
+      els.contribRate.textContent = rateText;
       const modeLabel = state.contrib.mode === 'gpu' ? 'GPU mode' : 'CPU mode';
-      const usage = state.contrib.mode === 'gpu' ? state.contrib.gpuUsage : state.contrib.cpuUsage;
+      const usage = state.contrib.mode === 'gpu'
+        ? 'full power'
+        : `${getCpuCoreSelection().selected}/${getCpuCoreSelection().total} cores`;
       if (els.contribRateSub) {
-        els.contribRateSub.textContent = `${modeLabel} at ${usage}% of the selected budget.`;
+        els.contribRateSub.textContent = `${modeLabel} at ${usage}.`;
       }
+      if (els.gpuOverlayRate) els.gpuOverlayRate.textContent = rateText;
+      if (els.contribDisableDisplayBtn) {
+        els.contribDisableDisplayBtn.style.display = state.contrib.running ? '' : 'none';
+        els.contribDisableDisplayBtn.disabled = !state.contrib.running;
+      }
+      syncGpuOverlay();
+      syncContribUsageFrame();
+    }
+
+    function syncContribUsageFrame() {
+      const usage = Math.max(0, Math.min(100, Math.round(state.contrib.actualUsage || 0)));
+      const modeLabel = state.contrib.mode === 'gpu' ? 'GPU' : 'CPU';
+      const coreSel = getCpuCoreSelection();
+      const target = state.contrib.mode === 'gpu'
+        ? 'full power'
+        : `${coreSel.selected}/${coreSel.total} cores`;
+      if (els.contribUsage) els.contribUsage.textContent = state.contrib.mode === 'gpu'
+        ? `${usage}%`
+        : `${coreSel.selected} cores`;
+      if (els.contribUsageSub) {
+        els.contribUsageSub.textContent = `${modeLabel} target ${target}, measured from the last active compute window.`;
+      }
+      if (els.contribUsageMeter) els.contribUsageMeter.style.width = `${usage}%`;
+      if (els.contribFloatUsage) els.contribFloatUsage.textContent = state.contrib.mode === 'gpu'
+        ? `${usage}%`
+        : `${coreSel.selected} cores`;
+      if (els.contribFloatUsageSub) {
+        els.contribFloatUsageSub.textContent = `${modeLabel} target ${target}`;
+      }
+      if (els.contribFloatRate) els.contribFloatRate.textContent = `${formatAbsInt(state.contrib.rate)} shuffles/s`;
+    }
+
+    function syncContribFloatingPanel() {
+      const show = state.contrib.running && state.mainView !== 'contribute';
+      const panel = els.contribFloatPanel;
+      if (!panel) return;
+      panel.hidden = !show;
+      panel.classList.toggle('show', show);
+      if (show) {
+        if (els.contribFloatRate) els.contribFloatRate.textContent = `${formatAbsInt(state.contrib.rate)} shuffles/s`;
+        if (els.contribFloatUsage) els.contribFloatUsage.textContent = `${Math.max(0, Math.min(100, Math.round(state.contrib.actualUsage || 0)))}%`;
+      }
+    }
+
+    function syncContribLiveUi(force = false) {
+      const now = performance.now();
+      if (!force && now - (state.contrib.lastUiSyncAt || 0) < 1000) return;
+      state.contrib.lastUiSyncAt = now;
+      if (state.contrib.uiDirty && state.contrib.best) {
+        renderContribPreview();
+      }
+      syncContribRateFrame();
+      syncContribFloatingPanel();
+      syncGpuOverlay();
+      state.contrib.uiDirty = false;
     }
 
     function contribApplySettings() {
@@ -2391,40 +3145,79 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       state.contrib.nickname = String(els.contribNick.value || '').trim();
       state.contrib.code = String(els.contribCode.value || '').trim();
       state.contrib.mode = els.contribMode?.value === 'gpu' ? 'gpu' : 'cpu';
-      state.contrib.cpuUsage = Math.max(5, Math.min(100, Number(els.contribCpuUsage?.value) || 55));
-      state.contrib.gpuUsage = Math.max(5, Math.min(100, Number(els.contribGpuUsage?.value) || 80));
-      state.contrib.chunkSize = Math.max(1, Number(els.contribChunk.value) || 8000000);
-      state.contrib.reportEveryMs = Math.max(250, Number(els.contribInterval.value) || 1000);
-      if (els.contribCpuUsageLabel) els.contribCpuUsageLabel.textContent = `${state.contrib.cpuUsage}%`;
-      if (els.contribGpuUsageLabel) els.contribGpuUsageLabel.textContent = `${state.contrib.gpuUsage}%`;
-      state.contrib.gpuBatchSize = Math.max(64, Math.round(state.contrib.chunkSize * (state.contrib.gpuUsage / 100) * 0.0025));
-      if (state.contrib.mode === 'cpu') {
-        state.contrib.chunkSize = Math.max(1, Math.round(state.contrib.chunkSize * (state.contrib.cpuUsage / 100)));
+      state.contrib.gpuBackend = ['webgpu', 'webgl2', 'webgl'].includes(els.contribGpuBackend?.value)
+        ? els.contribGpuBackend.value
+        : 'webgpu';
+      const requestedCpuCores = Number(els.contribCpuCores?.value);
+      if (Number.isFinite(requestedCpuCores) && requestedCpuCores > 0) {
+        state.contrib.cpuCores = requestedCpuCores;
       }
-      syncContribRateFrame();
+      const coreSel = getCpuCoreSelection();
+      state.contrib.cpuCoreCount = coreSel.reported;
+      state.contrib.cpuCores = coreSel.selected;
+      state.contrib.gpuUsage = 100;
+      const baseChunk = Math.max(1, Number(els.contribChunk?.value) || 20000000);
+      state.contrib.chunkSize = baseChunk;
+      state.contrib.gpuBatchSize = Math.max(262144, baseChunk);
+      state.contrib.reportEveryMs = Math.max(250, Number(els.contribInterval?.value) || 1000);
+      syncCpuCoreUi();
+      syncGpuBackendUi();
+      
+      const gpuBackendField = document.getElementById('gpuBackendField');
+      const gpuField = document.getElementById('gpuAdapterField');
+      const cpuField = document.getElementById('cpuAdapterField');
+      if (gpuBackendField) gpuBackendField.style.display = state.contrib.mode === 'gpu' ? '' : 'none';
+      if (gpuField) gpuField.style.display = state.contrib.mode === 'gpu' ? '' : 'none';
+      if (cpuField) cpuField.style.display = state.contrib.mode === 'cpu' ? '' : 'none';
+      if (els.contribDisableDisplayBtn) {
+        els.contribDisableDisplayBtn.style.display = state.contrib.mode === 'gpu' ? '' : 'none';
+        els.contribDisableDisplayBtn.disabled = !(state.contrib.mode === 'gpu' && state.contrib.running);
+      }
+      syncGpuOverlay();
+      syncContribLiveUi(true);
     }
 
     function contribStop() {
       state.contrib.running = false;
+      state.contrib.actualUsage = 0;
+      state.contrib.usageWindowMs = 0;
+      state.contrib.displayHidden = false;
+      document.body.classList.remove('gpu-display-hidden');
+      if (els.gpuOverlay) els.gpuOverlay.hidden = true;
+      stopContribWorker();
+      if (state.contrib.uiTimer) {
+        clearInterval(state.contrib.uiTimer);
+        state.contrib.uiTimer = null;
+      }
       if (state.contrib.socket) {
         try { state.contrib.socket.close(); } catch {}
       }
       state.contrib.socket = null;
       state.contrib.connected = false;
       state.contrib.rate = 0;
-      syncContribRateFrame();
+      if (state.contrib.gpuPersist) {
+        try {
+          for (const buf of Object.values(state.contrib.gpuPersist)) { if (buf && buf.destroy) buf.destroy(); }
+        } catch {}
+        state.contrib.gpuPersist = null;
+      }
+      syncContribLiveUi(true);
+      syncStatsTrafficState();
       updateContribStatus('Stopped', 'Client is idle.');
       appendContribLog('stopped');
     }
 
     async function contribReport(socket) {
       if (!state.contrib.best || state.contrib.best.best_correct < 0) return;
+      const bestArr = Array.isArray(state.contrib.best.best_arr)
+        ? state.contrib.best.best_arr
+        : Array.from(state.contrib.best.best_arr || []);
       const payload = {
         type: 'result',
         seed: String(state.contrib.seed),
         total_done: Math.floor(state.contrib.total),
         best_correct: state.contrib.best.best_correct,
-        best_arr: state.contrib.best.best_arr,
+        best_arr: bestArr,
         best_index: state.contrib.best.best_index
       };
       socket.send(JSON.stringify(payload));
@@ -2432,13 +3225,111 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       appendContribLog(`sent result: total=${payload.total_done}, best=${payload.best_correct}, index=${payload.best_index}`);
     }
 
+    // ── Benchmark helpers ──────────────────────────────────────────
+    async function benchmarkCpu() {
+      const BENCH_MS = 500;
+      const btn = document.getElementById('benchmarkCpuBtn');
+      const result = document.getElementById('benchmarkCpuResult');
+      if (btn) { btn.disabled = true; btn.textContent = 'Benchmarking…'; }
+      if (result) result.textContent = '';
+      await new Promise(r => setTimeout(r, 10));
+      const seed = BigInt(Math.floor(Math.random() * 0xffffffff));
+      let cursor = 0;
+      let processed = 0;
+      const t0 = performance.now();
+      while (performance.now() - t0 < BENCH_MS) {
+        const remaining = BENCH_MS - (performance.now() - t0);
+        if (remaining <= 0) break;
+        const burst = runCpuBurst(seed, cursor, cursor + 250000, remaining);
+        const ran = Math.max(0, burst.cursor - cursor);
+        if (ran <= 0) break;
+        cursor = burst.cursor;
+        processed += ran;
+      }
+      const elapsed = Math.max(1, performance.now() - t0);
+      const rate = Math.round(processed / (elapsed / 1000));
+      const fp32EquivOpsPerShuffle = 50;
+      const gflops = (rate * fp32EquivOpsPerShuffle) / 1e9;
+      const gflopsStr = `${gflops >= 1 ? gflops.toFixed(2) : gflops.toFixed(3)} GFLOPS`;
+      if (result) result.textContent = `~${formatAbsInt(rate)} shuffles/s · ${gflopsStr}`;
+      if (btn) { btn.disabled = false; btn.textContent = 'Benchmark CPU'; }
+      // Auto-calibrate chunk size: aim for roughly 100ms of work per burst.
+      const recommended = Math.max(100000, Math.round(rate * 0.1));
+      if (els.contribChunk) { els.contribChunk.value = String(recommended); contribApplySettings(); }
+      appendContribLog(`CPU benchmark: ${formatAbsInt(rate)} sh/s (${gflopsStr}) → chunk set to ${formatAbsInt(recommended)}`);
+    }
+
+    async function benchmarkGpu() {
+      const btn = document.getElementById('benchmarkGpuBtn');
+      const result = document.getElementById('benchmarkGpuResult');
+      if (btn) { btn.disabled = true; btn.textContent = 'Benchmarking…'; }
+      if (result) result.textContent = '';
+      const ok = await ensureContribGpu();
+      if (!ok) {
+        if (result) result.textContent = 'WebGPU unavailable';
+        if (btn) { btn.disabled = false; btn.textContent = 'Benchmark GPU'; }
+        return;
+      }
+
+      const WARMUP_COUNT = 250000;
+      const SAMPLE_COUNT = 1000000;
+      const SAMPLES = 2;
+      const seed = BigInt(Math.floor(Math.random() * 0xffffffff));
+
+      await runGpuRange(seed, 0, WARMUP_COUNT, { includeBestArr: false });
+
+      const rates = [];
+      for (let i = 0; i < SAMPLES; i += 1) {
+        const t0 = performance.now();
+        await runGpuRange(seed, i * SAMPLE_COUNT, (i + 1) * SAMPLE_COUNT, { includeBestArr: false });
+        const elapsed = Math.max(1, performance.now() - t0);
+        rates.push(Math.round(SAMPLE_COUNT / (elapsed / 1000)));
+      }
+
+      const rate = Math.round(rates.reduce((a, b) => a + b, 0) / Math.max(1, rates.length));
+      // FP32-equivalent estimate: the shuffle kernel is integer-heavy, so this is a throughput translation,
+      // not a literal floating-point instruction counter.
+      const fp32EquivOpsPerShuffle = 50;
+      const tfloPs = (rate * fp32EquivOpsPerShuffle) / 1e12;
+      const tflopsStr = tfloPs >= 0.001 ? `${tfloPs.toFixed(4)} TFLOPS` : `${(tfloPs * 1000).toFixed(3)} GFLOPS`;
+      if (result) result.textContent = `~${formatAbsInt(rate)} sh/s · ${tflopsStr}`;
+      if (btn) { btn.disabled = false; btn.textContent = 'Benchmark GPU'; }
+      const recommended = Math.max(1048576, Math.min(8388608, Math.round(rate * 0.5)));
+      if (els.contribChunk) { els.contribChunk.value = String(recommended); contribApplySettings(); }
+      appendContribLog(`GPU benchmark: ${formatAbsInt(rate)} sh/s (${tflopsStr}) → chunk set to ${formatAbsInt(recommended)}`);
+    }
+
+    // ── Core compute: CPU tight-loop with real duty-cycle control ──
+    // Returns { best_correct, best_arr, best_index, done, total }
+    // Runs synchronously for `budgetMs` ms — no await, no event-loop yielding
+    function runCpuBurst(seed64, startCursor, endLimit, budgetMs) {
+      const t0 = performance.now();
+      let cursor = startCursor;
+      let best_correct = -1;
+      let best_arr = new Uint8Array(25);
+      let best_index = cursor;
+      // Process in sub-chunks to check time without checking every iteration
+      const INNER = 5000;
+      while (cursor < endLimit) {
+        const chunkEnd = Math.min(endLimit, cursor + INNER);
+        const r = runRange(seed64, cursor, chunkEnd);
+        if (r.best_correct > best_correct) {
+          best_correct = r.best_correct;
+          best_arr = r.best_arr;
+          best_index = r.best_index;
+        }
+        cursor = chunkEnd;
+        if (performance.now() - t0 >= budgetMs) break;
+      }
+      return { best_correct, best_arr, best_index, cursor, elapsed: performance.now() - t0 };
+    }
+
     async function contribProcessChunk(socket) {
       if (!state.contrib.running || state.contrib.seed === null) return;
       const start = Number(state.contrib.cursor);
       const rawLimit = Number(state.contrib.count);
-      const remaining = Math.max(0, rawLimit - start);
       const batchSize = state.contrib.mode === 'gpu' ? state.contrib.gpuBatchSize : state.contrib.chunkSize;
-      const end = Math.min(rawLimit, start + Math.max(1, batchSize));
+      const end = Math.min(rawLimit, start + batchSize);
       if (end <= start) return;
 
       const t0 = performance.now();
@@ -2449,15 +3340,22 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 
       if (!state.contrib.best || best.best_correct > state.contrib.best.best_correct) {
         state.contrib.best = best;
-        renderContribPreview();
+        state.contrib.uiDirty = true;
       }
 
       state.contrib.cursor = BigInt(end);
       state.contrib.total += (end - start);
-      state.contrib.rate = t1 > t0 ? Math.round(((end - start) / ((t1 - t0) / 1000))) : state.contrib.rate;
+
+      const computeMs = Math.max(0.001, t1 - t0);
+      const wallMs = Math.max(0.001, (state.contrib.lastChunkAt || t0) ? (t1 - (state.contrib.lastChunkAt || t0)) : computeMs);
+      const instantRate = Math.round((end - start) / (computeMs / 1000));
+      state.contrib.rate = Number.isFinite(instantRate) ? instantRate : state.contrib.rate;
+      state.contrib.actualUsage = Math.max(0, Math.min(100, (computeMs / wallMs) * 100));
+      state.contrib.usageWindowMs = wallMs;
       state.contrib.startedAt = state.contrib.startedAt || performance.now();
       state.contrib.lastChunkAt = t1;
-      syncContribRateFrame();
+      state.contrib.throughputPerMs = Math.max(1, (end - start) / computeMs);
+      state.contrib.uiDirty = true;
 
       const now = performance.now();
       if (!state.contrib.lastReportAt || now - state.contrib.lastReportAt >= state.contrib.reportEveryMs) {
@@ -2467,6 +3365,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 
     async function contribStart() {
       contribApplySettings();
+      setGpuDisplayHidden(false);
+      stopContribWorker();
       if (!state.contrib.uuid || !state.contrib.nickname) {
         updateContribStatus('Missing fields', 'UUID and nickname are required.');
         appendContribLog('fill uuid + nickname first');
@@ -2477,6 +3377,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         try { state.contrib.socket.close(); } catch {}
       }
       state.contrib.running = true;
+      syncStatsTrafficState();
       state.contrib.best = { best_correct: -1, best_arr: [], best_index: 0 };
       state.contrib.total = 0;
       state.contrib.cursor = 0n;
@@ -2484,8 +3385,17 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       state.contrib.lastReportAt = 0;
       state.contrib.log = [];
       state.contrib.rate = 0;
+      state.contrib.actualUsage = 0;
+      state.contrib.usageWindowMs = 0;
       state.contrib.startedAt = performance.now();
-      syncContribRateFrame();
+      state.contrib.lastUiSyncAt = 0;
+      state.contrib.uiDirty = true;
+      if (state.contrib.uiTimer) clearInterval(state.contrib.uiTimer);
+      state.contrib.uiTimer = setInterval(() => {
+        if (!state.contrib.running) return;
+        syncContribLiveUi();
+      }, 1000);
+      syncContribLiveUi(true);
       els.contribLog.textContent = '';
       renderContribPreview();
 
@@ -2536,29 +3446,110 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
           state.contrib.cursor = 0n;
           state.contrib.total = 0;
           state.contrib.best = { best_correct: -1, best_arr: [], best_index: 0 };
+          state.contrib.actualUsage = 0;
+          state.contrib.usageWindowMs = 0;
           renderContribPreview();
           updateContribStatus('Working', `seed ${msg.seed}, count ${msg.count}`);
           appendContribLog(`job: seed=${msg.seed} count=${msg.count}`);
+          const token = (state.contrib.loopToken = (state.contrib.loopToken || 0) + 1);
+          if (state.contrib.mode === 'cpu') {
+            await startContribCpuWorker(socket, token);
+            return;
+          }
           const loop = async () => {
-            if (!state.contrib.running || socket.readyState !== WebSocket.OPEN || state.contrib.seed === null) return;
-            await contribProcessChunk(socket);
-            if (!state.contrib.running) return;
-            if (state.contrib.cursor < state.contrib.count) {
-              setTimeout(loop, 0);
-            } else {
-              appendContribLog('lease exhausted, waiting for next job');
+            while (state.contrib.running && socket.readyState === WebSocket.OPEN && state.contrib.seed !== null && token === state.contrib.loopToken) {
+              if (state.contrib.cursor >= state.contrib.count) {
+                appendContribLog('lease exhausted, waiting for next job');
+                break;
+              }
+
+              const coreSel = getCpuCoreSelection();
+
+              if (state.contrib.mode === 'cpu') {
+                // ── CPU: continuous full-power bursts across the selected worker count ──
+                const burstStart = performance.now();
+                const limit = Number(state.contrib.count);
+                const start = Number(state.contrib.cursor);
+
+                const INNER = 5000;
+                let cursor = start;
+                let best_correct = state.contrib.best?.best_correct ?? -1;
+                let best_arr = state.contrib.best?.best_arr ?? new Uint8Array(25);
+                let best_index = state.contrib.best?.best_index ?? start;
+                const burstBudgetMs = 28;
+                const burstDeadline = burstStart + burstBudgetMs;
+
+                while (cursor < limit && performance.now() < burstDeadline) {
+                  const chunkEnd = Math.min(limit, cursor + INNER);
+                  const r = runRange(state.contrib.seed, cursor, chunkEnd);
+                  if (r.best_correct > best_correct) {
+                    best_correct = r.best_correct;
+                    best_arr = r.best_arr;
+                    best_index = r.best_index;
+                    state.contrib.uiDirty = true;
+                  }
+                  cursor = chunkEnd;
+                }
+
+                const burstEnd = performance.now();
+                const computeMs = Math.max(0.001, burstEnd - burstStart);
+                const total = cursor - start;
+
+                if (total > 0) {
+                  state.contrib.best = { best_correct, best_arr, best_index };
+                  state.contrib.cursor = BigInt(cursor);
+                  state.contrib.total += total;
+                  state.contrib.rate = Math.round(total / (computeMs / 1000));
+                  state.contrib.actualUsage = 100;
+                  state.contrib.lastChunkAt = burstEnd;
+                  state.contrib.uiDirty = true;
+                }
+
+                const now = performance.now();
+                if (!state.contrib.lastReportAt || now - state.contrib.lastReportAt >= state.contrib.reportEveryMs) {
+                  await contribReport(socket);
+                  if (!state.contrib.running || token !== state.contrib.loopToken) return;
+                }
+
+                await new Promise(r => setTimeout(r, 0));
+                if (!state.contrib.running || token !== state.contrib.loopToken) return;
+
+              } else {
+                // ── GPU: dispatch continuously at full power, then only yield for reporting ──
+                const gStart = performance.now();
+                const limit = Number(state.contrib.count);
+                const start = Number(state.contrib.cursor);
+                const batchSize = Math.min(limit - start, state.contrib.gpuBatchSize);
+                if (batchSize <= 0) break;
+
+                const best = await runGpuRange(state.contrib.seed, start, start + batchSize);
+                if (!state.contrib.running || token !== state.contrib.loopToken) return;
+
+                const gEnd = performance.now();
+                const computeMs = Math.max(0.001, gEnd - gStart);
+
+                if (!state.contrib.best || best.best_correct > state.contrib.best.best_correct) {
+                  state.contrib.best = best;
+                  state.contrib.uiDirty = true;
+                }
+                state.contrib.cursor = BigInt(start + batchSize);
+                state.contrib.total += batchSize;
+                state.contrib.rate = Math.round(batchSize / (computeMs / 1000));
+                state.contrib.actualUsage = 100;
+                state.contrib.lastChunkAt = gEnd;
+                state.contrib.uiDirty = true;
+
+                const now = performance.now();
+                if (!state.contrib.lastReportAt || now - state.contrib.lastReportAt >= state.contrib.reportEveryMs) {
+                  await contribReport(socket);
+                  if (!state.contrib.running || token !== state.contrib.loopToken) return;
+                }
+              }
+
+              syncContribLiveUi();
             }
           };
           loop();
-        } else if (msg.type === 'credited') {
-          appendContribLog(`credited: +${msg.credit ?? 0}`);
-          updateContribStatus('Credited', `lifetime ${msg.lifetime_shuffles ?? 'n/a'}`);
-        } else if (msg.type === 'rejected') {
-          appendContribLog(`rejected: ${msg.reason || 'unknown'}`);
-          updateContribStatus('Rejected', msg.reason || 'unknown');
-        } else if (msg.type === 'client_outdated') {
-          appendContribLog('client_outdated');
-          updateContribStatus('Outdated', 'Update the client protocol.');
         } else if (msg.type === 'contributions_closed') {
           appendContribLog('contributions_closed');
           updateContribStatus('Closed', 'The operator paused new work.');
@@ -2639,6 +3630,10 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 
     /* ── websocket connection ──────────────────────────────────── */
     function connectWs() {
+      if (shouldPauseStatsTraffic()) {
+        closeStatsWs();
+        return;
+      }
       if (state.wsSocket) {
         try {
           state.wsSocket.onopen = null;
@@ -2658,11 +3653,18 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         state.wsSocket = socket;
 
         socket.onopen = () => {
+          if (shouldPauseStatsTraffic()) {
+            try { socket.close(); } catch {}
+            return;
+          }
           state.wsConnected = true;
           state.wsConnectTime = Date.now();
           state.reconnectAttempts = 0;
-          // Send keep-alive pings so server doesn't drop idle connection
           state.heartbeatTimer = setInterval(() => {
+            if (shouldPauseStatsTraffic()) {
+              closeStatsWs();
+              return;
+            }
             if (socket.readyState === WebSocket.OPEN) {
               try { socket.send('ping'); } catch {}
             }
@@ -2671,26 +3673,32 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
           updateSummary();
         };
 
-        socket.onmessage = (event) => applyWsMessage(event.data);
+        socket.onmessage = (event) => {
+          if (shouldPauseStatsTraffic()) return;
+          applyWsMessage(event.data);
+        };
 
         socket.onerror = () => {};
 
         socket.onclose = () => {
           clearInterval(state.heartbeatTimer);
-          if (state.wsManualClose) return;
+          state.heartbeatTimer = null;
+          if (state.wsManualClose || shouldPauseStatsTraffic()) return;
           state.wsConnected = false;
-          // Silent immediate reconnect — no delay, no status flash
           state.reconnectTimer = setTimeout(connectWs, 80);
         };
       } catch (err) {
         console.error('WebSocket connect failed:', err);
         state.wsConnected = false;
-        state.reconnectTimer = setTimeout(connectWs, 3000);
+        if (!shouldPauseStatsTraffic()) {
+          state.reconnectTimer = setTimeout(connectWs, 3000);
+        }
       }
     }
 
     /* ── API polling ───────────────────────────────────────────── */
     async function loadLeaderboard() {
+      if (shouldPauseStatsTraffic()) return;
       try {
         trackRequest();
         const res = await fetch(API_URL, { cache: 'no-store' });
@@ -2711,6 +3719,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 
 
     async function loadStats() {
+      if (shouldPauseStatsTraffic()) return;
       try {
         trackRequest();
         const res = await fetch(STATS_URL, { cache: 'no-store' });
@@ -2730,7 +3739,12 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     function startPolling() {
       clearInterval(state.pollTimer);
       state._pollFlip = 0;
+      if (shouldPauseStatsTraffic()) {
+        state.pollTimer = null;
+        return;
+      }
       state.pollTimer = setInterval(() => {
+        if (shouldPauseStatsTraffic()) return;
         if ((state._pollFlip++ % 2) === 0) {
           loadLeaderboard();
         } else {
@@ -2766,6 +3780,14 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 
     els.badgeRefreshBtn.addEventListener('click', () => loadBadgeStats(true));
     els.profileRefreshBtn.addEventListener('click', refreshActiveProfile);
+    if (els.contribDisableDisplayBtn) {
+      els.contribDisableDisplayBtn.addEventListener('click', () => {
+        if (state.contrib.running) setGpuDisplayHidden(true);
+      });
+    }
+    if (els.gpuOverlayStopBtn) {
+      els.gpuOverlayStopBtn.addEventListener('click', () => setGpuDisplayHidden(false));
+    }
     els.profileCloseBtn.addEventListener('click', closeProfileModal);
     els.profileModal.addEventListener('click', (event) => {
       if (event.target === els.profileModal) closeProfileModal();
@@ -2830,6 +3852,11 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         setProfileAutoUpdate(!state.profileAutoUpdate);
       });
     }
+    if (els.pauseStatsToggle) {
+      els.pauseStatsToggle.addEventListener('click', () => {
+        setPauseStatsWhileComputing(!state.pauseStatsWhileComputing);
+      });
+    }
 
     if (els.profileAutoUpdateInterval) {
       els.profileAutoUpdateInterval.addEventListener('input', () => {
@@ -2843,17 +3870,36 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 
     els.contribStartBtn.addEventListener('click', contribStart);
     els.contribStopBtn.addEventListener('click', contribStop);
-    [els.contribWsUrl, els.contribUuid, els.contribNick, els.contribCode, els.contribMode, els.contribChunk, els.contribInterval].forEach(input => {
+    if (els.contribFloatStopBtn) els.contribFloatStopBtn.addEventListener('click', contribStop);
+    [els.contribWsUrl, els.contribUuid, els.contribNick, els.contribCode, els.contribMode, els.contribGpuBackend, els.contribChunk, els.contribInterval].forEach(input => {
+      if (!input) return;
       input.addEventListener('change', contribApplySettings);
       input.addEventListener('input', contribApplySettings);
     });
-    if (els.contribCpuUsage) {
-      els.contribCpuUsage.addEventListener('input', contribApplySettings);
-      els.contribCpuUsage.addEventListener('change', contribApplySettings);
+    if (els.contribCpuCores) {
+      els.contribCpuCores.addEventListener('input', contribApplySettings);
+      els.contribCpuCores.addEventListener('change', contribApplySettings);
     }
     if (els.contribGpuUsage) {
       els.contribGpuUsage.addEventListener('input', contribApplySettings);
       els.contribGpuUsage.addEventListener('change', contribApplySettings);
+    }
+
+    // Benchmark buttons
+    {
+      const cpuBench = document.getElementById('benchmarkCpuBtn');
+      const gpuBench = document.getElementById('benchmarkGpuBtn');
+      const gpuAdapterSel = document.getElementById('contribGpuAdapter');
+      if (cpuBench) cpuBench.addEventListener('click', benchmarkCpu);
+      if (gpuBench) gpuBench.addEventListener('click', benchmarkGpu);
+      if (gpuAdapterSel) {
+        gpuAdapterSel.addEventListener('change', () => {
+          const val = gpuAdapterSel.value;
+          state.contrib.selectedAdapterIdx = val === '' ? -1 : Number(val);
+          // Invalidate current GPU device so next start re-initialises
+          state.contrib.gpuReady = false;
+        });
+      }
     }
 
     window.addEventListener('resize', fitAllLiveNumbers);
@@ -2875,11 +3921,13 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
           els.contribMode.value = 'cpu';
           state.contrib.mode = 'cpu';
         }
+      } else if (navigator.gpu) {
+        // Enumerate adapters in background — populate GPU selector
+        enumerateGpuAdapters().catch(() => {});
       }
       setViewState('stats');
       await Promise.all([loadLeaderboard(), loadStats()]);
-      connectWs();
-      startPolling();
+      syncStatsTrafficState();
       renderRows();
       renderStats();
       updateSummary(true);
