@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bogostats beta-v1.3.1</title>
+  <title>bogostats beta-v1.4</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -83,6 +83,16 @@
     .search input{width:100%;border:0;outline:none;background:transparent;color:var(--text);font-size:14px;font-family:inherit}
     .btn{border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:14px;padding:10px 14px;cursor:pointer;transition:border-color .15s var(--ease),background .15s var(--ease);font:inherit;font-size:13px}
     .btn:hover{border-color:rgba(125,211,252,.4)}
+    .controls-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .filter-panel{margin:0 0 14px;padding:14px;border:1px solid var(--line);background:var(--panel-2);border-radius:16px}
+    .filter-panel[hidden]{display:none !important}
+    .filter-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .filter-field{display:flex;flex-direction:column;gap:8px}
+    .filter-field label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+    .filter-field input{width:100%;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:12px;padding:11px 12px;font:inherit;font-size:14px;outline:none}
+    .filter-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px}
+    .filter-summary{color:var(--muted);font-size:12px;line-height:1.45}
+
     .list-wrap{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:rgba(255,255,255,.02)}
     .list-head,.list-row{display:grid;grid-template-columns:64px 1.8fr 1.1fr 1fr;gap:12px;align-items:center}
     .list-head{padding:13px 14px;font-size:12px;color:var(--muted);background:rgba(255,255,255,.03);border-bottom:1px solid var(--line);text-transform:uppercase;letter-spacing:.05em;position:sticky;top:0;z-index:1}
@@ -336,6 +346,11 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
     .float-contrib .btn{padding:9px 12px;border-radius:12px}
     .badge-dashboard-top{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
     .badge-dashboard-top .mini{height:100%}
+    .badge-progress{display:grid;gap:8px;margin:10px 0 14px;padding:12px 14px;border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:16px}
+    .badge-progress[hidden]{display:none !important}
+    .badge-progress-row{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted)}
+    .badge-progress-bar{height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}
+    .badge-progress-bar > span{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,var(--good),#7dd3fc);transition:width .18s var(--ease)}
 
     body.gpu-display-hidden .shell,
     body.gpu-display-hidden .float-contrib,
@@ -387,6 +402,10 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       .stats-summary{grid-template-columns:repeat(1,minmax(0,1fr))}
       .array-wrap{grid-template-columns:repeat(10,minmax(0,1fr));min-height:340px}
     }
+    @media (max-width:900px){
+      .filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+
 
     @media (max-width:1280px){
       .metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -421,6 +440,10 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       .profile-grid,
       .field-grid{grid-template-columns:repeat(1,minmax(0,1fr))}
     }
+    @media (max-width:500px){
+      .filter-grid{grid-template-columns:repeat(1,minmax(0,1fr))}
+    }
+
   </style>
 </head>
 <body>
@@ -428,7 +451,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
     <div class="topbar">
       <div class="brand">
         <h1><span class="brand-bogo">bogo</span><span class="brand-stats">stats.</span></h1>
-        <p class="version">beta-v1.3.1</p>
+        <p class="version">beta-v1.4</p>
         <p class="brand-desc">25 elements, being checked by an api and websocket.</p>
       </div>
       <div class="top-actions">
@@ -486,6 +509,13 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
           <div class="controls" style="margin-bottom:12px;">
             <div class="small-note">This tab aggregates badges from contributor profiles fetched from the loaded leaderboard sample. It only counts badges where <code>held</code> is true.</div>
             <button class="btn" id="badgeRefreshBtn" type="button">Refresh badges</button>
+          </div>
+          <div class="badge-progress" id="badgeProgressWrap" hidden>
+            <div class="badge-progress-row">
+              <span id="badgeProgressText">Loading badges…</span>
+              <span id="badgeProgressCount">0%</span>
+            </div>
+            <div class="badge-progress-bar" aria-hidden="true"><span id="badgeProgressFill"></span></div>
           </div>
           <div class="badge-card-grid" id="badgeCardGrid">
             <div class="loading">Load the badge dashboard to see results.</div>
@@ -760,7 +790,51 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
               <span class="subtle">Search</span>
               <input id="searchInput" type="text" placeholder="Filter by nickname, username, id, shuffles…" autocomplete="off" />
             </div>
-            <button class="btn" id="refreshBtn">Refresh</button>
+            <div class="controls-actions">
+              <button class="btn" id="filtersBtn" type="button" aria-expanded="false">Filters</button>
+              <button class="btn" id="clearFiltersBtn" type="button">Clear</button>
+              <button class="btn" id="refreshBtn" type="button">Refresh</button>
+            </div>
+          </div>
+          <div class="filter-panel" id="filterPanel" hidden>
+            <div class="filter-grid">
+              <div class="filter-field">
+                <label for="filterShufflesMin">More than x shuffles</label>
+                <input id="filterShufflesMin" type="text" inputmode="numeric" placeholder="e.g. 100000" />
+              </div>
+              <div class="filter-field">
+                <label for="filterShufflesMax">Less than x shuffles</label>
+                <input id="filterShufflesMax" type="text" inputmode="numeric" placeholder="e.g. 500000" />
+              </div>
+              <div class="filter-field">
+                <label for="filterRateMin">More than x shuffles/sec</label>
+                <input id="filterRateMin" type="text" inputmode="numeric" placeholder="e.g. 250" />
+              </div>
+              <div class="filter-field">
+                <label for="filterRateMax">Less than x shuffles/sec</label>
+                <input id="filterRateMax" type="text" inputmode="numeric" placeholder="e.g. 1000" />
+              </div>
+              <div class="filter-field">
+                <label for="filterBadgeCountMin">More than x badge count</label>
+                <input id="filterBadgeCountMin" type="text" inputmode="numeric" placeholder="e.g. 2" />
+              </div>
+              <div class="filter-field">
+                <label for="filterBadgeCountMax">Less than x badge count</label>
+                <input id="filterBadgeCountMax" type="text" inputmode="numeric" placeholder="e.g. 10" />
+              </div>
+              <div class="filter-field">
+                <label for="filterBadgesText">Badges contain</label>
+                <input id="filterBadgesText" type="text" placeholder="badge name text" autocomplete="off" />
+              </div>
+              <div class="filter-field">
+                <label for="filterAnyText">Extra text filter</label>
+                <input id="filterAnyText" type="text" placeholder="nickname, username, id, etc." autocomplete="off" />
+              </div>
+            </div>
+            <div class="filter-footer">
+              <div class="filter-summary" id="filterSummary">No filters active.</div>
+              <div class="small-note">Blank fields are ignored. The number fields accept plain text, so you can type whatever value you want.</div>
+            </div>
           </div>
 
           <div class="view-panel" id="statsPanel" hidden>
@@ -943,6 +1017,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
     const WS_URL = 'wss://bogo.swapjs.dev/ws';
     const API_URL = 'https://bogo.swapjs.dev/api/leaderboard?limit=2000';
     const STATS_URL = 'https://bogo.swapjs.dev/api/stats';
+    const BADGE_CACHE_KEY = 'bogostats.badgeCache';
 
     const state = {
       animations: true,
@@ -960,6 +1035,16 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       reconnectTimer: null,
       reconnectAttempts: 0,
       search: '',
+      filters: {
+        shufflesMin: '',
+        shufflesMax: '',
+        rateMin: '',
+        rateMax: '',
+        badgeCountMin: '',
+        badgeCountMax: '',
+        badgesText: '',
+        anyText: ''
+      },
       wsSamples: [],
       rowHistory: new Map(),
       wsManualClose: false,
@@ -972,7 +1057,10 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       badgeSummary: null,
       badgeLoading: false,
       badgeSampleSize: 120,
+      badgeProgress: { loaded: 0, total: 0, text: '' },
       contributorCache: new Map(),
+      contributorCacheMeta: new Map(),
+      badgeCacheHydrated: false,
       activeContributorModal: null,
       activeBadgeModal: null,
       searchTimer: null,
@@ -1012,7 +1100,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
         gpuAdapter: null,
         gpuPipeline: null,
         gpuThresholds: null,
-        gpuBatchSize: 4096,
+        gpuBatchSize: 1048576,
         rate: 0,
         actualUsage: 0,
         usageWindowMs: 0,
@@ -1054,6 +1142,18 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       leaderboardMeta:      document.getElementById('leaderboardMeta'),
       leaderboardRows:      document.getElementById('leaderboardRows'),
       searchInput:          document.getElementById('searchInput'),
+      filtersBtn:           document.getElementById('filtersBtn'),
+      clearFiltersBtn:      document.getElementById('clearFiltersBtn'),
+      filterPanel:          document.getElementById('filterPanel'),
+      filterShufflesMin:    document.getElementById('filterShufflesMin'),
+      filterShufflesMax:    document.getElementById('filterShufflesMax'),
+      filterRateMin:        document.getElementById('filterRateMin'),
+      filterRateMax:        document.getElementById('filterRateMax'),
+      filterBadgeCountMin:  document.getElementById('filterBadgeCountMin'),
+      filterBadgeCountMax:  document.getElementById('filterBadgeCountMax'),
+      filterBadgesText:     document.getElementById('filterBadgesText'),
+      filterAnyText:        document.getElementById('filterAnyText'),
+      filterSummary:        document.getElementById('filterSummary'),
       refreshBtn:           document.getElementById('refreshBtn'),
       miniActive:           document.getElementById('miniActive'),
       miniFastest:          document.getElementById('miniFastest'),
@@ -1079,6 +1179,10 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       footerNote:           document.getElementById('footerNote'),
       badgesView:           document.getElementById('badgesView'),
       badgeViewMeta:        document.getElementById('badgeViewMeta'),
+      badgeProgressWrap:    document.getElementById('badgeProgressWrap'),
+      badgeProgressText:    document.getElementById('badgeProgressText'),
+      badgeProgressCount:   document.getElementById('badgeProgressCount'),
+      badgeProgressFill:    document.getElementById('badgeProgressFill'),
       badgeUniqueCount:     document.getElementById('badgeUniqueCount'),
       badgeHeldCount:       document.getElementById('badgeHeldCount'),
       badgeContributorCount:document.getElementById('badgeContributorCount'),
@@ -1190,6 +1294,19 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       }
     }
 
+    function saveJsonPreference(key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+    }
+
+    function loadJsonPreference(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw == null ? fallback : JSON.parse(raw);
+      } catch {
+        return fallback;
+      }
+    }
+
     function applyTheme(theme, persist = true) {
       const next = theme === 'light' ? 'light' : 'dark';
       state.theme = next;
@@ -1227,23 +1344,24 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       const storedCpuCores = Number(storedCpuCoresRaw);
       state.contrib.cpuCores = Number.isFinite(storedCpuCores) && storedCpuCores > 0
         ? Math.max(1, Math.min(totalCores, Math.round(storedCpuCores)))
-        : Math.max(1, Math.min(totalCores, Math.round(totalCores * 0.5)));
+        : Math.max(1, Math.min(totalCores, Math.round(totalCores)));
       state.profileAutoUpdate = autoUpdate;
       state.profileAutoUpdateIntervalSec = intervalSec;
       state.pauseStatsWhileComputing = pauseStats;
+      hydrateBadgeCache();
     }
 
 
     function getCpuCoreSelection() {
       const hw = Number(navigator.hardwareConcurrency || 1);
       const stored = Number(state.cpuCoreCount || 0);
-      const reported = Math.max(1, Math.min(128, Math.round(hw || stored || 1)));
+      const total = Math.max(1, Math.min(128, Math.round(hw || stored || 1)));
       let selected = Number(state.contrib.cpuCores || 1);
       if (!Number.isFinite(selected) || selected < 1) selected = 1;
       selected = Math.max(1, Math.min(128, Math.round(selected)));
-      state.cpuCoreCount = reported;
+      state.cpuCoreCount = total;
       state.contrib.cpuCores = selected;
-      return { selected, reported };
+      return { selected, reported: total, total };
     }
 
     function syncCpuCoreUi(persist = false) {
@@ -1776,6 +1894,121 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       return absInt(row.__shuffleRate);
     }
 
+    function parseOptionalNumberField(value) {
+      const raw = String(value ?? '').trim();
+      if (!raw) return null;
+      const normalized = raw.replace(/,/g, '');
+      const num = Number(normalized);
+      return Number.isFinite(num) ? num : null;
+    }
+
+    function heldBadgeCount(row) {
+      return Array.isArray(row.__badges) ? row.__badges.length : 0;
+    }
+
+    function rowMatchesLeaderboardFilters(row) {
+      const searchQuery = String(state.search || '').trim().toLowerCase();
+      const filterQuery = String(state.filters.anyText || '').trim().toLowerCase();
+      const badgeQuery = String(state.filters.badgesText || '').trim().toLowerCase();
+
+      if (searchQuery) {
+        const haystack = [row.__nickname, row.__username, row.__key, row.__score, row.__shuffleRate, ...(row.__badges || [])]
+          .join(' | ')
+          .toLowerCase();
+        if (!haystack.includes(searchQuery)) return false;
+      }
+
+      if (filterQuery) {
+        const haystack = [row.__nickname, row.__username, row.__key, row.__score, row.__shuffleRate, ...(row.__badges || [])]
+          .join(' | ')
+          .toLowerCase();
+        if (!haystack.includes(filterQuery)) return false;
+      }
+
+      const shuffles = absInt(row.__score);
+      const rate = rowShufflePerSecond(row);
+      const badgeCount = heldBadgeCount(row);
+
+      const shufflesMin = parseOptionalNumberField(state.filters.shufflesMin);
+      if (shufflesMin != null && !(shuffles > shufflesMin)) return false;
+      const shufflesMax = parseOptionalNumberField(state.filters.shufflesMax);
+      if (shufflesMax != null && !(shuffles < shufflesMax)) return false;
+
+      const rateMin = parseOptionalNumberField(state.filters.rateMin);
+      if (rateMin != null && !(rate > rateMin)) return false;
+      const rateMax = parseOptionalNumberField(state.filters.rateMax);
+      if (rateMax != null && !(rate < rateMax)) return false;
+
+      const badgeCountMin = parseOptionalNumberField(state.filters.badgeCountMin);
+      if (badgeCountMin != null && !(badgeCount > badgeCountMin)) return false;
+      const badgeCountMax = parseOptionalNumberField(state.filters.badgeCountMax);
+      if (badgeCountMax != null && !(badgeCount < badgeCountMax)) return false;
+
+      if (badgeQuery) {
+        const badgeHaystack = (row.__badges || []).join(' | ').toLowerCase();
+        if (!badgeHaystack.includes(badgeQuery)) return false;
+      }
+
+      return true;
+    }
+
+    function getActiveLeaderboardFilterCount() {
+      const fields = [
+        state.search,
+        state.filters.anyText,
+        state.filters.shufflesMin,
+        state.filters.shufflesMax,
+        state.filters.rateMin,
+        state.filters.rateMax,
+        state.filters.badgeCountMin,
+        state.filters.badgeCountMax,
+        state.filters.badgesText
+      ];
+      return fields.filter(v => String(v ?? '').trim()).length;
+    }
+
+    function syncLeaderboardFilterUi(rows = state.filtered) {
+      const active = getActiveLeaderboardFilterCount();
+      const shown = Array.isArray(rows) ? rows.length : 0;
+      const total = state.rows.length;
+      if (els.filtersBtn) {
+        els.filtersBtn.textContent = active ? `Filters (${active})` : 'Filters';
+        els.filtersBtn.setAttribute('aria-expanded', String(!(els.filterPanel && els.filterPanel.hidden)));
+      }
+      if (els.clearFiltersBtn) {
+        els.clearFiltersBtn.disabled = active === 0;
+      }
+      if (els.filterSummary) {
+        els.filterSummary.textContent = active
+          ? `${formatAbsInt(shown)} of ${formatAbsInt(total)} rows match ${formatAbsInt(active)} active filter${active === 1 ? '' : 's'}.`
+          : `No filters active. Showing ${formatAbsInt(shown)} rows.`;
+      }
+    }
+
+    function syncLeaderboardFiltersFromInputs() {
+      state.filters.shufflesMin = els.filterShufflesMin ? els.filterShufflesMin.value : '';
+      state.filters.shufflesMax = els.filterShufflesMax ? els.filterShufflesMax.value : '';
+      state.filters.rateMin = els.filterRateMin ? els.filterRateMin.value : '';
+      state.filters.rateMax = els.filterRateMax ? els.filterRateMax.value : '';
+      state.filters.badgeCountMin = els.filterBadgeCountMin ? els.filterBadgeCountMin.value : '';
+      state.filters.badgeCountMax = els.filterBadgeCountMax ? els.filterBadgeCountMax.value : '';
+      state.filters.badgesText = els.filterBadgesText ? els.filterBadgesText.value : '';
+      state.filters.anyText = els.filterAnyText ? els.filterAnyText.value : '';
+      syncLeaderboardFilterUi();
+    }
+
+    function clearLeaderboardFilters() {
+      state.search = '';
+      if (els.searchInput) els.searchInput.value = '';
+      for (const key of ['shufflesMin', 'shufflesMax', 'rateMin', 'rateMax', 'badgeCountMin', 'badgeCountMax', 'badgesText', 'anyText']) {
+        state.filters[key] = '';
+      }
+      for (const el of [els.filterShufflesMin, els.filterShufflesMax, els.filterRateMin, els.filterRateMax, els.filterBadgeCountMin, els.filterBadgeCountMax, els.filterBadgesText, els.filterAnyText]) {
+        if (el) el.value = '';
+      }
+      scheduleRenderRows();
+    }
+
     function buildRowMarkup(row, rank) {
       const shuffleDelta = rowShufflePerSecond(row);
       return `
@@ -1810,12 +2043,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
     }
 
     function renderRows() {
-      const q = state.search.trim().toLowerCase();
-      let rows = state.rows.filter(row => {
-        if (!q) return true;
-        const haystack = [row.__nickname, row.__username, String(row.__score), ...(row.__badges || [])].join(' | ').toLowerCase();
-        return haystack.includes(q);
-      });
+      let rows = state.rows.filter(row => rowMatchesLeaderboardFilters(row));
 
       // In shuffles/sec view, exclude players with 0 shuffles/sec
       if (state.view === 'shuffle') {
@@ -1824,6 +2052,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
 
       state.filtered = rows;
       updateSummary();
+      syncLeaderboardFilterUi(rows);
 
       const container = els.leaderboardRows;
       const prevRects = new Map();
@@ -2183,6 +2412,57 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       els.badgeHoldersModal.hidden = false;
     }
 
+    function normalizeBadgeCacheEntry(entry) {
+      if (!entry || typeof entry !== 'object') return null;
+      const profile = normalizeContributor(entry.profile ?? entry);
+      if (!profile) return null;
+      const savedAt = Number(entry.savedAt || entry.updatedAt || Date.now());
+      return { profile, savedAt };
+    }
+
+    function hydrateBadgeCache() {
+      if (state.badgeCacheHydrated) return;
+      state.badgeCacheHydrated = true;
+      const saved = loadJsonPreference(BADGE_CACHE_KEY, null);
+      if (!saved || typeof saved !== 'object') return;
+      const profiles = saved.profiles && typeof saved.profiles === 'object' ? saved.profiles : {};
+      for (const [nickname, entry] of Object.entries(profiles)) {
+        const normalized = normalizeBadgeCacheEntry(entry);
+        if (!normalized) continue;
+        state.contributorCache.set(nickname, normalized.profile);
+        state.contributorCacheMeta.set(nickname, normalized.savedAt);
+      }
+      if (saved.badgeSummary && typeof saved.badgeSummary === 'object') {
+        state.badgeSummary = saved.badgeSummary;
+      }
+    }
+
+    function persistBadgeCache() {
+      const profiles = {};
+      for (const [nickname, profile] of state.contributorCache.entries()) {
+        profiles[nickname] = {
+          profile,
+          savedAt: Number(state.contributorCacheMeta.get(nickname) || Date.now())
+        };
+      }
+      saveJsonPreference(BADGE_CACHE_KEY, {
+        profiles,
+        badgeSummary: state.badgeSummary,
+        savedAt: Date.now()
+      });
+    }
+
+    function setBadgeProgress(loaded, total, text) {
+      const safeTotal = Math.max(0, Number(total) || 0);
+      const safeLoaded = Math.max(0, Math.min(safeTotal || 1, Number(loaded) || 0));
+      const pct = safeTotal ? Math.round((safeLoaded / safeTotal) * 100) : 100;
+      state.badgeProgress = { loaded: safeLoaded, total: safeTotal, text: text || '' };
+      if (els.badgeProgressWrap) els.badgeProgressWrap.hidden = safeTotal === 0;
+      if (els.badgeProgressText) els.badgeProgressText.textContent = text || (safeTotal ? 'Loading badges…' : 'Badges ready');
+      if (els.badgeProgressCount) els.badgeProgressCount.textContent = `${pct}%`;
+      if (els.badgeProgressFill) els.badgeProgressFill.style.width = `${pct}%`;
+    }
+
     async function fetchContributorProfile(nickname, force = false) {
       const key = String(nickname || '').trim();
       if (!key) return null;
@@ -2193,7 +2473,11 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const payload = await res.json();
       const profile = normalizeContributor(payload);
-      if (profile) state.contributorCache.set(key, profile);
+      if (profile) {
+        state.contributorCache.set(key, profile);
+        state.contributorCacheMeta.set(key, Date.now());
+        persistBadgeCache();
+      }
       return profile;
     }
 
@@ -2241,37 +2525,72 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
 
     async function loadBadgeStats(force = false) {
       if (state.badgeLoading) return;
+      hydrateBadgeCache();
+
+      const nicknames = [...new Set(state.rows.map(r => r.__nickname).filter(Boolean))];
+      const total = nicknames.length;
+      const cacheFreshnessMs = 10 * 60 * 1000;
+
       if (state.badgeSummary && !force && Date.now() - state.badgeSummary.fetchedAt < 45000) {
         renderBadgeDashboard();
         return;
       }
 
+      if (state.badgeSummary && !force) {
+        renderBadgeDashboard();
+      }
+
       state.badgeLoading = true;
       els.badgeViewMeta.textContent = 'Fetching contributor profiles…';
       els.badgeCardGrid.innerHTML = '<div class="loading">Loading badges…</div>';
+      setBadgeProgress(0, total, total ? 'Preparing cached badges…' : 'No leaderboard rows available');
 
       try {
-        const nicknames = [...new Set(state.rows.map(r => r.__nickname).filter(Boolean))];
-        els.badgeContributorCount.textContent = formatAbsInt(nicknames.length);
+        els.badgeContributorCount.textContent = formatAbsInt(total);
         if (!nicknames.length) {
           state.badgeSummary = { badges: [], heldInstances: 0, contributors: 0, fetchedAt: Date.now() };
+          setBadgeProgress(0, 0, 'No badges to load');
+          persistBadgeCache();
           renderBadgeDashboard();
           return;
         }
 
         const profiles = [];
-        const concurrency = 6;
-        let index = 0;
-        async function worker() {
-          while (index < nicknames.length) {
-            const nick = nicknames[index++];
-            try {
-              const profile = await fetchContributorProfile(nick);
-              if (profile) profiles.push(profile);
-            } catch {}
+        const cachedProfiles = [];
+        const toFetch = [];
+        const now = Date.now();
+
+        for (const nick of nicknames) {
+          const cached = state.contributorCache.get(nick);
+          const cachedAt = Number(state.contributorCacheMeta.get(nick) || 0);
+          if (cached && (!force || now - cachedAt < cacheFreshnessMs)) {
+            cachedProfiles.push(cached);
+          } else {
+            toFetch.push(nick);
           }
         }
-        await Promise.all(Array.from({ length: Math.min(concurrency, nicknames.length) }, worker));
+
+        profiles.push(...cachedProfiles);
+        setBadgeProgress(cachedProfiles.length, total, cachedProfiles.length ? 'Loaded cached badges, checking for updates…' : 'Loading badge profiles…');
+
+        const concurrency = 6;
+        let index = 0;
+        let fetchedCount = 0;
+        async function worker() {
+          while (index < toFetch.length) {
+            const nick = toFetch[index++];
+            try {
+              const profile = await fetchContributorProfile(nick, true);
+              if (profile) {
+                profiles.push(profile);
+                fetchedCount += 1;
+              }
+            } catch {}
+            setBadgeProgress(cachedProfiles.length + fetchedCount, total, 'Loading badge profiles…');
+          }
+        }
+
+        await Promise.all(Array.from({ length: Math.min(concurrency, toFetch.length || 1) }, worker));
 
         const aggregated = aggregateBadgeStats(profiles);
         state.badgeSummary = {
@@ -2280,6 +2599,8 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
           contributors: profiles.length,
           fetchedAt: Date.now()
         };
+        persistBadgeCache();
+        setBadgeProgress(total, total, 'Badge cache updated');
         renderBadgeDashboard();
       } catch (err) {
         els.badgeViewMeta.textContent = `Badge load failed: ${err.message || err}`;
@@ -2301,6 +2622,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       els.badgeHeldCount.textContent = formatAbsInt(summary.heldInstances);
       els.badgeUniqueCount.textContent = formatAbsInt(summary.badges.length);
       els.badgeViewMeta.textContent = `Updated ${nowText()}`;
+      setBadgeProgress(summary.contributors || 0, summary.contributors || 0, 'Badge cache ready');
 
       const top = summary.badges[0];
       if (top) {
@@ -2377,7 +2699,8 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       const show = !!state.contrib.displayHidden && state.contrib.running;
       els.gpuOverlay.hidden = !show;
       if (els.gpuOverlayMsg) {
-        els.gpuOverlayMsg.textContent = state.contrib.mode === 'cpu'
+        const mode = state.contrib.mode === 'gpu' && state.contrib.gpuDevice ? 'gpu' : 'cpu';
+        els.gpuOverlayMsg.textContent = mode === 'cpu'
           ? "You're CPU computing."
           : "You're GPU computing.";
       }
@@ -2409,7 +2732,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
         let bestCorrect = -1;
         let bestIndex = 0;
         let bestArr = new Uint8Array(N);
-        let chunkSize = 2000000;
+        let chunkSize = 8000000;
 
         function splitmix64(state) {
           state = (state + XORO_STEP) & XORO_MASK64;
@@ -2508,7 +2831,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
         function step() {
           if (!running) return;
           const startedAt = performance.now();
-          const deadline = startedAt + 28;
+          const deadline = startedAt + 48;
           let processed = 0;
           let bestChanged = false;
           const limit = Math.min(end, cursor + chunkSize);
@@ -2647,21 +2970,20 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
             state.contrib.cursor = BigInt(Number(msg.total_done) || 0);
           }
 
-          const now = performance.now();
-          if (!state.contrib.lastReportAt || now - state.contrib.lastReportAt >= state.contrib.reportEveryMs) {
-            await contribReport(socket);
-          }
-          syncContribLiveUi();
-
           if (msg.type === 'done') {
             doneCount += 1;
             state.contrib.cpuWorkerDone = doneCount;
+            await contribReport(socket);
             if (doneCount >= workerCount) {
               state.contrib.workerBusy = false;
               appendContribLog('cpu worker pool done');
             }
+            syncContribLiveUi();
             return;
           }
+
+          await contribReport(socket);
+          syncContribLiveUi();
         };
 
         worker.postMessage({
@@ -2924,6 +3246,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         state.contrib.gpuThresholds = makeGpuThresholds();
         state.contrib.gpuReady = true;
         state.contrib.gpuPersist = null; // will be lazily created on first batch
+        state.contrib.gpuReadbackQueue = Promise.resolve();
         return true;
       } catch (error) {
         state.contrib.gpuReady = false;
@@ -2931,6 +3254,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         state.contrib.gpuPipeline = null;
         state.contrib.gpuAdapter = null;
         state.contrib.gpuPersist = null;
+        state.contrib.gpuReadbackQueue = Promise.resolve();
         appendContribLog(`gpu unavailable: ${error?.message || error}`);
         return false;
       }
@@ -3014,56 +3338,66 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       const device = state.contrib.gpuDevice;
       const pipeline = state.contrib.gpuPipeline;
       if (!device || !pipeline) return runRange(seed64, lo, hi);
+      state.contrib.gpuReadbackQueue = state.contrib.gpuReadbackQueue || Promise.resolve();
+
       const includeBestArr = options.includeBestArr !== false;
       const start = Number(lo);
       const end = Number(hi);
       const count = Math.max(0, end - start);
       if (!count) return { best_correct: -1, best_arr: [], best_index: start };
 
-      const states = buildGpuStates(seed64, start, count);
-      const p = getGpuPersist(device, count);
+      const job = async () => {
+        const states = buildGpuStates(seed64, start, count);
+        const p = getGpuPersist(device, count);
 
-      device.queue.writeBuffer(p.stateBuffer, 0, states);
-      const params = new Uint32Array([count >>> 0, start >>> 0, 0, 0]);
-      device.queue.writeBuffer(p.paramsBuffer, 0, params);
+        try { if (p.readScores.mapState === 'mapped') p.readScores.unmap(); } catch {}
+        device.queue.writeBuffer(p.stateBuffer, 0, states);
+        const params = new Uint32Array([count >>> 0, start >>> 0, 0, 0]);
+        device.queue.writeBuffer(p.paramsBuffer, 0, params);
 
-      const bindGroup = device.createBindGroup({
-        layout: pipeline.getBindGroupLayout(0),
-        entries: [
-          { binding: 0, resource: { buffer: p.stateBuffer, size: count * 4 * 4 } },
-          { binding: 1, resource: { buffer: p.scoresBuffer, size: count * 4 } },
-          { binding: 2, resource: { buffer: p.paramsBuffer } }
-        ]
-      });
+        const bindGroup = device.createBindGroup({
+          layout: pipeline.getBindGroupLayout(0),
+          entries: [
+            { binding: 0, resource: { buffer: p.stateBuffer, size: count * 4 * 4 } },
+            { binding: 1, resource: { buffer: p.scoresBuffer, size: count * 4 } },
+            { binding: 2, resource: { buffer: p.paramsBuffer } }
+          ]
+        });
 
-      const encoder = device.createCommandEncoder();
-      const pass = encoder.beginComputePass();
-      pass.setPipeline(pipeline);
-      pass.setBindGroup(0, bindGroup);
-      pass.dispatchWorkgroups(Math.ceil(count / 256));
-      pass.end();
-      encoder.copyBufferToBuffer(p.scoresBuffer, 0, p.readScores, 0, count * 4);
-      device.queue.submit([encoder.finish()]);
+        const encoder = device.createCommandEncoder();
+        const pass = encoder.beginComputePass();
+        pass.setPipeline(pipeline);
+        pass.setBindGroup(0, bindGroup);
+        pass.dispatchWorkgroups(Math.ceil(count / 256));
+        pass.end();
+        encoder.copyBufferToBuffer(p.scoresBuffer, 0, p.readScores, 0, count * 4);
+        device.queue.submit([encoder.finish()]);
 
-      await p.readScores.mapAsync(GPUMapMode.READ);
-      const scores = new Uint32Array(p.readScores.getMappedRange(0, count * 4).slice(0));
-      p.readScores.unmap();
+        await device.queue.onSubmittedWorkDone();
+        await p.readScores.mapAsync(GPUMapMode.READ);
+        const mapped = p.readScores.getMappedRange(0, count * 4);
+        const scores = new Uint32Array(mapped.slice(0));
+        p.readScores.unmap();
 
-      let best_correct = -1;
-      let best_index = start;
-      for (let i = 0; i < count; i += 1) {
-        const score = scores[i];
-        if (score > best_correct) {
-          best_correct = score;
-          best_index = start + i;
+        let best_correct = -1;
+        let best_index = start;
+        for (let i = 0; i < count; i += 1) {
+          const score = scores[i];
+          if (score > best_correct) {
+            best_correct = score;
+            best_index = start + i;
+          }
         }
-      }
 
-      let best_arr = [];
-      if (includeBestArr) {
-        best_arr = Array.from(oneShuffleFromSeed(shuffleSeed(seed64, best_index)).arr);
-      }
-      return { best_correct, best_arr, best_index };
+        let best_arr = [];
+        if (includeBestArr) {
+          best_arr = Array.from(oneShuffleFromSeed(shuffleSeed(seed64, best_index)).arr);
+        }
+        return { best_correct, best_arr, best_index };
+      };
+
+      state.contrib.gpuReadbackQueue = state.contrib.gpuReadbackQueue.then(job, job);
+      return state.contrib.gpuReadbackQueue;
     }
 
     function updateContribStatus(title, sub) {
@@ -3157,8 +3491,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       state.contrib.cpuCores = coreSel.selected;
       state.contrib.gpuUsage = 100;
       const baseChunk = Math.max(1, Number(els.contribChunk?.value) || 20000000);
-      state.contrib.chunkSize = baseChunk;
-      state.contrib.gpuBatchSize = Math.max(262144, baseChunk);
+      state.contrib.chunkSize = Math.max(1000000, baseChunk);
+      state.contrib.gpuBatchSize = Math.max(1048576, Math.min(33554432, Math.round(baseChunk * 4)));
       state.contrib.reportEveryMs = Math.max(250, Number(els.contribInterval?.value) || 1000);
       syncCpuCoreUi();
       syncGpuBackendUi();
@@ -3195,6 +3529,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       state.contrib.socket = null;
       state.contrib.connected = false;
       state.contrib.rate = 0;
+      state.contrib.gpuReadbackQueue = Promise.resolve();
       if (state.contrib.gpuPersist) {
         try {
           for (const buf of Object.values(state.contrib.gpuPersist)) { if (buf && buf.destroy) buf.destroy(); }
@@ -3208,17 +3543,22 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
 
     async function contribReport(socket) {
-      if (!state.contrib.best || state.contrib.best.best_correct < 0) return;
-      const bestArr = Array.isArray(state.contrib.best.best_arr)
-        ? state.contrib.best.best_arr
-        : Array.from(state.contrib.best.best_arr || []);
+      if (!socket || socket.readyState !== WebSocket.OPEN) return;
+      const best = state.contrib.best || { best_correct: -1, best_arr: [], best_index: 0 };
+      const bestArr = Array.isArray(best.best_arr)
+        ? best.best_arr
+        : Array.from(best.best_arr || []);
+      const totalDone = Math.max(
+        Number(state.contrib.total || 0) || 0,
+        Number(state.contrib.cursor || 0n) || 0
+      );
       const payload = {
         type: 'result',
         seed: String(state.contrib.seed),
-        total_done: Math.floor(state.contrib.total),
-        best_correct: state.contrib.best.best_correct,
+        total_done: totalDone,
+        best_correct: Number(best.best_correct ?? -1),
         best_arr: bestArr,
-        best_index: state.contrib.best.best_index
+        best_index: Number(best.best_index ?? 0)
       };
       socket.send(JSON.stringify(payload));
       state.contrib.lastReportAt = performance.now();
@@ -3226,37 +3566,105 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
 
     // ── Benchmark helpers ──────────────────────────────────────────
+    function snapshotContribBenchmarkSettings() {
+      contribApplySettings();
+      const coreSel = getCpuCoreSelection();
+      return {
+        chunkSize: Math.max(1, Number(state.contrib.chunkSize) || 20000000),
+        cpuCores: Math.max(1, Number(coreSel.selected) || 1),
+        cpuCoreCount: Math.max(1, Number(coreSel.reported) || 1),
+        gpuBatchSize: Math.max(1048576, Number(state.contrib.gpuBatchSize) || Math.max(1048576, Number(state.contrib.chunkSize) || 20000000)),
+        mode: state.contrib.mode,
+        gpuBackend: state.contrib.gpuBackend,
+        reportEveryMs: Math.max(250, Number(state.contrib.reportEveryMs) || 1000)
+      };
+    }
+
     async function benchmarkCpu() {
-      const BENCH_MS = 500;
+      const BENCH_MS = 650;
       const btn = document.getElementById('benchmarkCpuBtn');
       const result = document.getElementById('benchmarkCpuResult');
       if (btn) { btn.disabled = true; btn.textContent = 'Benchmarking…'; }
       if (result) result.textContent = '';
+
+      const settings = snapshotContribBenchmarkSettings();
       await new Promise(r => setTimeout(r, 10));
+
       const seed = BigInt(Math.floor(Math.random() * 0xffffffff));
-      let cursor = 0;
-      let processed = 0;
-      const t0 = performance.now();
-      while (performance.now() - t0 < BENCH_MS) {
-        const remaining = BENCH_MS - (performance.now() - t0);
-        if (remaining <= 0) break;
-        const burst = runCpuBurst(seed, cursor, cursor + 250000, remaining);
-        const ran = Math.max(0, burst.cursor - cursor);
-        if (ran <= 0) break;
-        cursor = burst.cursor;
-        processed += ran;
+      const workerCount = Math.max(1, Math.min(settings.cpuCores, settings.cpuCoreCount || settings.cpuCores));
+      const burstSize = Math.max(1, Math.floor(settings.chunkSize / workerCount));
+
+      async function runSingleThreadBenchmark() {
+        let cursor = 0;
+        let processed = 0;
+        const t0 = performance.now();
+        while (performance.now() - t0 < BENCH_MS) {
+          const remaining = BENCH_MS - (performance.now() - t0);
+          if (remaining <= 0) break;
+          const burst = runCpuBurst(seed, cursor, cursor + burstSize, remaining);
+          const ran = Math.max(0, burst.cursor - cursor);
+          if (ran <= 0) break;
+          cursor = burst.cursor;
+          processed += ran;
+        }
+        return { processed, elapsed: Math.max(1, performance.now() - t0) };
       }
-      const elapsed = Math.max(1, performance.now() - t0);
-      const rate = Math.round(processed / (elapsed / 1000));
-      const fp32EquivOpsPerShuffle = 50;
+
+      async function runWorkerBenchmark() {
+        return await new Promise((resolve) => {
+          const totalRange = Math.max(workerCount * burstSize, workerCount * 500000);
+          let cursor = 0;
+          let done = 0;
+          let processed = 0;
+          const workers = [];
+          const t0 = performance.now();
+          const cleanup = () => {
+            for (const w of workers) {
+              try { w.postMessage({ type: 'stop' }); } catch {}
+              try { w.terminate(); } catch {}
+            }
+          };
+          for (let i = 0; i < workerCount; i += 1) {
+            const worker = makeContribWorker();
+            workers.push(worker);
+            const segStart = Math.floor((totalRange * i) / workerCount);
+            const segEnd = Math.floor((totalRange * (i + 1)) / workerCount);
+            worker.onmessage = (event) => {
+              const msg = event.data || {};
+              if (msg.processed) processed += Number(msg.processed) || 0;
+              if (msg.type === 'done') {
+                done += 1;
+                if (done >= workerCount) {
+                  cleanup();
+                  resolve({ processed, elapsed: Math.max(1, performance.now() - t0) });
+                }
+              }
+            };
+            worker.postMessage({
+              type: 'start',
+              token: 1,
+              seed: String(seed),
+              start: segStart,
+              end: segEnd,
+              chunkSize: burstSize
+            });
+          }
+        });
+      }
+
+      const sample = workerCount > 1 && typeof Worker !== 'undefined'
+        ? await runWorkerBenchmark().catch(() => runSingleThreadBenchmark())
+        : await runSingleThreadBenchmark();
+
+      const rate = Math.max(1, Math.round(sample.processed / (sample.elapsed / 1000)));
+      const fp32EquivOpsPerShuffle = 500;
       const gflops = (rate * fp32EquivOpsPerShuffle) / 1e9;
       const gflopsStr = `${gflops >= 1 ? gflops.toFixed(2) : gflops.toFixed(3)} GFLOPS`;
       if (result) result.textContent = `~${formatAbsInt(rate)} shuffles/s · ${gflopsStr}`;
       if (btn) { btn.disabled = false; btn.textContent = 'Benchmark CPU'; }
-      // Auto-calibrate chunk size: aim for roughly 100ms of work per burst.
-      const recommended = Math.max(100000, Math.round(rate * 0.1));
+      const recommended = Math.max(250000, Math.round(rate * 0.2 / Math.max(1, workerCount)));
       if (els.contribChunk) { els.contribChunk.value = String(recommended); contribApplySettings(); }
-      appendContribLog(`CPU benchmark: ${formatAbsInt(rate)} sh/s (${gflopsStr}) → chunk set to ${formatAbsInt(recommended)}`);
+      appendContribLog(`CPU benchmark: ${formatAbsInt(rate)} sh/s (${gflopsStr}) → chunk set to ${formatAbsInt(recommended)} using ${workerCount} selected cores`);
     }
 
     async function benchmarkGpu() {
@@ -3264,6 +3672,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       const result = document.getElementById('benchmarkGpuResult');
       if (btn) { btn.disabled = true; btn.textContent = 'Benchmarking…'; }
       if (result) result.textContent = '';
+
+      const settings = snapshotContribBenchmarkSettings();
       const ok = await ensureContribGpu();
       if (!ok) {
         if (result) result.textContent = 'WebGPU unavailable';
@@ -3271,32 +3681,33 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         return;
       }
 
-      const WARMUP_COUNT = 250000;
-      const SAMPLE_COUNT = 1000000;
-      const SAMPLES = 2;
+      const batchBase = Math.max(settings.gpuBatchSize, settings.chunkSize, 1048576);
+      const WARMUP_COUNT = Math.max(262144, Math.floor(batchBase / 2));
+      const SAMPLE_COUNT = Math.max(batchBase, Math.min(16777216, batchBase * 2));
+      const SAMPLES = 3;
       const seed = BigInt(Math.floor(Math.random() * 0xffffffff));
 
       await runGpuRange(seed, 0, WARMUP_COUNT, { includeBestArr: false });
 
       const rates = [];
+      let cursor = WARMUP_COUNT;
       for (let i = 0; i < SAMPLES; i += 1) {
         const t0 = performance.now();
-        await runGpuRange(seed, i * SAMPLE_COUNT, (i + 1) * SAMPLE_COUNT, { includeBestArr: false });
+        await runGpuRange(seed, cursor, cursor + SAMPLE_COUNT, { includeBestArr: false });
         const elapsed = Math.max(1, performance.now() - t0);
         rates.push(Math.round(SAMPLE_COUNT / (elapsed / 1000)));
+        cursor += SAMPLE_COUNT;
       }
 
       const rate = Math.round(rates.reduce((a, b) => a + b, 0) / Math.max(1, rates.length));
-      // FP32-equivalent estimate: the shuffle kernel is integer-heavy, so this is a throughput translation,
-      // not a literal floating-point instruction counter.
-      const fp32EquivOpsPerShuffle = 50;
+      const fp32EquivOpsPerShuffle = 500;
       const tfloPs = (rate * fp32EquivOpsPerShuffle) / 1e12;
       const tflopsStr = tfloPs >= 0.001 ? `${tfloPs.toFixed(4)} TFLOPS` : `${(tfloPs * 1000).toFixed(3)} GFLOPS`;
-      if (result) result.textContent = `~${formatAbsInt(rate)} sh/s · ${tflopsStr}`;
+      if (result) result.textContent = `~${formatAbsInt(rate)} shuffles/s · ${tflopsStr}`;
       if (btn) { btn.disabled = false; btn.textContent = 'Benchmark GPU'; }
-      const recommended = Math.max(1048576, Math.min(8388608, Math.round(rate * 0.5)));
+      const recommended = Math.max(1048576, Math.min(67108864, Math.round(rate)));
       if (els.contribChunk) { els.contribChunk.value = String(recommended); contribApplySettings(); }
-      appendContribLog(`GPU benchmark: ${formatAbsInt(rate)} sh/s (${tflopsStr}) → chunk set to ${formatAbsInt(recommended)}`);
+      appendContribLog(`GPU benchmark: ${formatAbsInt(rate)} sh/s (${tflopsStr}) → chunk set to ${formatAbsInt(recommended)} using the current GPU settings`);
     }
 
     // ── Core compute: CPU tight-loop with real duty-cycle control ──
@@ -3309,7 +3720,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       let best_arr = new Uint8Array(25);
       let best_index = cursor;
       // Process in sub-chunks to check time without checking every iteration
-      const INNER = 5000;
+      const INNER = 50000;
       while (cursor < endLimit) {
         const chunkEnd = Math.min(endLimit, cursor + INNER);
         const r = runRange(seed64, cursor, chunkEnd);
@@ -3328,7 +3739,9 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       if (!state.contrib.running || state.contrib.seed === null) return;
       const start = Number(state.contrib.cursor);
       const rawLimit = Number(state.contrib.count);
-      const batchSize = state.contrib.mode === 'gpu' ? state.contrib.gpuBatchSize : state.contrib.chunkSize;
+      const batchSize = state.contrib.mode === 'gpu'
+        ? Math.max(1048576, state.contrib.gpuBatchSize || 1048576)
+        : Math.max(1000000, state.contrib.chunkSize || 1000000);
       const end = Math.min(rawLimit, start + batchSize);
       if (end <= start) return;
 
@@ -3357,10 +3770,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       state.contrib.throughputPerMs = Math.max(1, (end - start) / computeMs);
       state.contrib.uiDirty = true;
 
-      const now = performance.now();
-      if (!state.contrib.lastReportAt || now - state.contrib.lastReportAt >= state.contrib.reportEveryMs) {
-        await contribReport(socket);
-      }
+      await contribReport(socket);
     }
 
     async function contribStart() {
@@ -3377,6 +3787,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         try { state.contrib.socket.close(); } catch {}
       }
       state.contrib.running = true;
+      state.contrib.gpuReadbackQueue = Promise.resolve();
       syncStatsTrafficState();
       state.contrib.best = { best_correct: -1, best_arr: [], best_index: 0 };
       state.contrib.total = 0;
@@ -3471,12 +3882,12 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
                 const limit = Number(state.contrib.count);
                 const start = Number(state.contrib.cursor);
 
-                const INNER = 5000;
+                const INNER = 50000;
                 let cursor = start;
                 let best_correct = state.contrib.best?.best_correct ?? -1;
                 let best_arr = state.contrib.best?.best_arr ?? new Uint8Array(25);
                 let best_index = state.contrib.best?.best_index ?? start;
-                const burstBudgetMs = 28;
+                const burstBudgetMs = 60;
                 const burstDeadline = burstStart + burstBudgetMs;
 
                 while (cursor < limit && performance.now() < burstDeadline) {
@@ -3505,11 +3916,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
                   state.contrib.uiDirty = true;
                 }
 
-                const now = performance.now();
-                if (!state.contrib.lastReportAt || now - state.contrib.lastReportAt >= state.contrib.reportEveryMs) {
-                  await contribReport(socket);
-                  if (!state.contrib.running || token !== state.contrib.loopToken) return;
-                }
+                await contribReport(socket);
+                if (!state.contrib.running || token !== state.contrib.loopToken) return;
 
                 await new Promise(r => setTimeout(r, 0));
                 if (!state.contrib.running || token !== state.contrib.loopToken) return;
@@ -3519,7 +3927,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
                 const gStart = performance.now();
                 const limit = Number(state.contrib.count);
                 const start = Number(state.contrib.cursor);
-                const batchSize = Math.min(limit - start, state.contrib.gpuBatchSize);
+                const batchSize = Math.min(limit - start, Math.max(1048576, state.contrib.gpuBatchSize || 1048576));
                 if (batchSize <= 0) break;
 
                 const best = await runGpuRange(state.contrib.seed, start, start + batchSize);
@@ -3539,11 +3947,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
                 state.contrib.lastChunkAt = gEnd;
                 state.contrib.uiDirty = true;
 
-                const now = performance.now();
-                if (!state.contrib.lastReportAt || now - state.contrib.lastReportAt >= state.contrib.reportEveryMs) {
-                  await contribReport(socket);
-                  if (!state.contrib.running || token !== state.contrib.loopToken) return;
-                }
+                await contribReport(socket);
+                if (!state.contrib.running || token !== state.contrib.loopToken) return;
               }
 
               syncContribLiveUi();
@@ -3821,8 +4226,43 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       const value = els.searchInput.value;
       state.searchTimer = setTimeout(() => {
         state.search = value;
+        syncLeaderboardFilterUi();
         scheduleRenderRows();
       }, 80);
+    });
+
+    if (els.filtersBtn) {
+      els.filtersBtn.addEventListener('click', () => {
+        if (!els.filterPanel) return;
+        els.filterPanel.hidden = !els.filterPanel.hidden;
+        els.filtersBtn.setAttribute('aria-expanded', String(!els.filterPanel.hidden));
+        syncLeaderboardFilterUi();
+      });
+    }
+
+    if (els.clearFiltersBtn) {
+      els.clearFiltersBtn.addEventListener('click', clearLeaderboardFilters);
+    }
+
+    [
+      els.filterShufflesMin,
+      els.filterShufflesMax,
+      els.filterRateMin,
+      els.filterRateMax,
+      els.filterBadgeCountMin,
+      els.filterBadgeCountMax,
+      els.filterBadgesText,
+      els.filterAnyText
+    ].forEach(input => {
+      if (!input) return;
+      input.addEventListener('input', () => {
+        syncLeaderboardFiltersFromInputs();
+        scheduleRenderRows();
+      });
+      input.addEventListener('change', () => {
+        syncLeaderboardFiltersFromInputs();
+        scheduleRenderRows();
+      });
     });
 
     els.refreshBtn.addEventListener('click', async () => {
@@ -3909,6 +4349,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       loadSettings();
       syncSettingsControls();
       contribApplySettings();
+      syncLeaderboardFiltersFromInputs();
+      syncLeaderboardFilterUi();
       renderContribPreview();
       syncContribRateFrame();
       if (!navigator.gpu && els.contribMode) {
