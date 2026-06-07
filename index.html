@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bogostats beta-v1.4.1</title>
+  <title>bogostats beta-v1.5</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -451,7 +451,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
     <div class="topbar">
       <div class="brand">
         <h1><span class="brand-bogo">bogo</span><span class="brand-stats">stats.</span></h1>
-        <p class="version">beta-v1.4.1</p>
+        <p class="version">beta-v1.5</p>
         <p class="brand-desc">25 elements, being checked by an api and websocket.</p>
       </div>
       <div class="top-actions">
@@ -615,9 +615,11 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
                 <button class="btn" id="contribStartBtn" type="button">Start client</button>
                 <button class="btn" id="contribStopBtn" type="button">Stop</button>
                 <button class="btn" id="contribDisableDisplayBtn" type="button">Disable display</button>
+                <button class="btn" id="downloadContributorBtn" type="button">Download bogostats contributor</button>
               </div>
               <div class="small-note" style="margin-top:12px;">
                 Required inputs: <strong>UUID</strong>, <strong>nickname</strong>, and <strong>recovery code</strong>. CPU mode runs the exact JavaScript shuffler across a worker pool sized by the core slider. GPU mode uses WebGPU when the browser supports it, and falls back to CPU if it does not. Both paths follow the validated shuffle rules from the bogosort client source.
+                The download button saves <code>bogostats_contributor.html</code> from the project repository.
               </div>
             </div>
             <div class="mini">
@@ -1211,6 +1213,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       contribInterval:      document.getElementById('contribInterval'),
       contribStartBtn:      document.getElementById('contribStartBtn'),
       contribStopBtn:       document.getElementById('contribStopBtn'),
+      downloadContributorBtn: document.getElementById('downloadContributorBtn'),
       contribStatus:        document.getElementById('contribStatus'),
       contribStatusSub:     document.getElementById('contribStatusSub'),
       contribRate:          document.getElementById('contribRate'),
@@ -2963,6 +2966,41 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       state.contrib.cpuWorkerRates = [];
     }
 
+    async function downloadBogostatsContributorFile() {
+      const sourceUrl = 'https://raw.githubusercontent.com/NoobieGD/bogostats/main/bogostats_contributor.html';
+      const filename = 'bogostats_contributor.html';
+      const prevLabel = els.downloadContributorBtn ? els.downloadContributorBtn.textContent : '';
+
+      if (els.downloadContributorBtn) {
+        els.downloadContributorBtn.disabled = true;
+        els.downloadContributorBtn.textContent = 'Preparing download…';
+      }
+
+      try {
+        const response = await fetch(sourceUrl, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        logContrib('Downloaded bogostats_contributor.html');
+      } catch (error) {
+        logContrib(`Download failed: ${error?.message || error}`);
+        window.open(sourceUrl, '_blank', 'noopener');
+      } finally {
+        if (els.downloadContributorBtn) {
+          els.downloadContributorBtn.disabled = false;
+          els.downloadContributorBtn.textContent = prevLabel || 'Download bogostats contributor';
+        }
+      }
+    }
+
     function startContribCpuWorker(socket, token) {
       stopContribWorker();
 
@@ -4264,6 +4302,9 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       els.contribDisableDisplayBtn.addEventListener('click', () => {
         if (state.contrib.running) setGpuDisplayHidden(true);
       });
+    }
+    if (els.downloadContributorBtn) {
+      els.downloadContributorBtn.addEventListener('click', downloadBogostatsContributorFile);
     }
     if (els.gpuOverlayStopBtn) {
       els.gpuOverlayStopBtn.addEventListener('click', () => setGpuDisplayHidden(false));
