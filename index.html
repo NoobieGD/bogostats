@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bogostats beta-v1.4</title>
+  <title>bogostats beta-v1.4.1</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -451,7 +451,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
     <div class="topbar">
       <div class="brand">
         <h1><span class="brand-bogo">bogo</span><span class="brand-stats">stats.</span></h1>
-        <p class="version">beta-v1.4</p>
+        <p class="version">beta-v1.4.1</p>
         <p class="brand-desc">25 elements, being checked by an api and websocket.</p>
       </div>
       <div class="top-actions">
@@ -601,8 +601,9 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
                   <div class="help">Choose how many logical CPU cores the client should use. The slider now follows the value you pick, even if the browser under-reports your CPU.</div>
                 </div>
                 <div class="field">
-                  <label>GPU mode</label>
-                  <div class="help">GPU dispatches run at full power automatically. The client keeps the backend busy without a duty slider.</div>
+                  <label for="contribGpuThreads">Used threads <span id="contribGpuThreadsLabel">256 threads</span></label>
+                  <input id="contribGpuThreads" type="range" min="256" max="65536" step="1" value="256" />
+                  <div class="help">Use any value from 256 up to the detected adapter limit. Benchmarking only measures speed; it does not force the slider value.</div>
                 </div>
                 <div class="field">
                   <label for="contribInterval">Report interval (ms)</label>
@@ -1101,6 +1102,10 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
         gpuPipeline: null,
         gpuThresholds: null,
         gpuBatchSize: 1048576,
+        gpuThreads: 256,
+        gpuThreadMax: 65536,
+        gpuDetectedThreadMax: 65536,
+        lastReportedTotal: 0,
         rate: 0,
         actualUsage: 0,
         usageWindowMs: 0,
@@ -1199,6 +1204,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       contribGpuBackend:    document.getElementById('contribGpuBackend'),
       contribChunk:         document.getElementById('contribChunk'),
       contribCpuCores:      document.getElementById('contribCpuCores'),
+      contribGpuThreads:    document.getElementById('contribGpuThreads'),
       contribGpuUsage:      document.getElementById('contribGpuUsage'),
       contribCpuCoresLabel: document.getElementById('contribCpuCoresLabel'),
       contribGpuUsageLabel: document.getElementById('contribGpuUsageLabel'),
@@ -1338,6 +1344,12 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       const pauseStats = loadPreference('bogostats.pauseStatsWhileComputing', '1') !== '0';
       const storedBackend = loadPreference('bogostats.gpuBackend', 'webgpu');
       state.contrib.gpuBackend = ['webgpu', 'webgl2', 'webgl'].includes(storedBackend) ? storedBackend : 'webgpu';
+      const storedGpuThreadsRaw = loadPreference('bogostats.gpuThreads', '256');
+      const storedGpuThreads = Number(storedGpuThreadsRaw);
+      state.contrib.gpuThreads = Number.isFinite(storedGpuThreads) && storedGpuThreads >= 256
+        ? Math.max(256, Math.round(storedGpuThreads))
+        : 256;
+      state.contrib.gpuThreadMax = Math.max(256, state.contrib.gpuThreadMax || 256);
       const totalCores = Math.max(1, Number(navigator.hardwareConcurrency || 1));
       state.cpuCoreCount = totalCores;
       const storedCpuCoresRaw = loadPreference('bogostats.cpuCores', '');
@@ -1379,11 +1391,58 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       }
     }
 
+    function getDetectedGpuThreadLimit() {
+      const detected = Number(
+        state.contrib.gpuDetectedThreadMax ||
+        state.contrib.gpuThreadMax ||
+        65536
+      );
+      return Math.max(256, Math.min(65536, Math.round(Number.isFinite(detected) ? detected : 65536)));
+    }
+
+    function getGpuThreadSelection() {
+      const max = getDetectedGpuThreadLimit();
+      let selected = Number(state.contrib.gpuThreads);
+      if (!Number.isFinite(selected)) selected = 256;
+      selected = Math.max(256, Math.min(max, Math.round(selected)));
+      state.contrib.gpuThreadMax = max;
+      state.contrib.gpuThreads = selected;
+      return { selected, max };
+    }
+
+    function syncGpuThreadsUi(persist = false) {
+      const sel = getGpuThreadSelection();
+      if (els.contribGpuThreads) {
+        els.contribGpuThreads.min = '256';
+        els.contribGpuThreads.max = String(sel.max);
+        els.contribGpuThreads.step = '1';
+        els.contribGpuThreads.value = String(sel.selected);
+      }
+      if (els.contribGpuThreadsLabel) {
+        els.contribGpuThreadsLabel.textContent = `${formatAbsInt(sel.selected)} threads`;
+      }
+      if (persist) savePreference('bogostats.gpuThreads', String(sel.selected));
+    }
+
     function syncGpuBackendUi(persist = false) {
       const backend = ['webgpu', 'webgl2', 'webgl'].includes(state.contrib.gpuBackend) ? state.contrib.gpuBackend : 'webgpu';
       state.contrib.gpuBackend = backend;
       if (els.contribGpuBackend) els.contribGpuBackend.value = backend;
       if (persist) savePreference('bogostats.gpuBackend', backend);
+    }
+
+    async function primeGpuThreadSlider() {
+      try {
+        if (!navigator.gpu) return;
+        const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+        if (!adapter) return;
+        const deviceLimit = Number(adapter.limits?.maxComputeInvocationsPerWorkgroup || 4096);
+        state.contrib.gpuDetectedThreadMax = Math.max(256, Math.min(65536, deviceLimit));
+        state.contrib.gpuThreadMax = state.contrib.gpuDetectedThreadMax;
+        syncGpuThreadsUi();
+      } catch {
+        // keep the provisional range if probing fails
+      }
     }
 
     function syncSettingsControls() {
@@ -3244,6 +3303,11 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         state.contrib.gpuDevice = device;
         state.contrib.gpuPipeline = pipeline;
         state.contrib.gpuThresholds = makeGpuThresholds();
+        state.contrib.gpuThreadMax = Math.max(
+          256,
+          Number(device.limits?.maxComputeInvocationsPerWorkgroup || adapter.limits?.maxComputeInvocationsPerWorkgroup || 256)
+        );
+        syncGpuThreadsUi(true);
         state.contrib.gpuReady = true;
         state.contrib.gpuPersist = null; // will be lazily created on first batch
         state.contrib.gpuReadbackQueue = Promise.resolve();
@@ -3411,7 +3475,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       els.contribRate.textContent = rateText;
       const modeLabel = state.contrib.mode === 'gpu' ? 'GPU mode' : 'CPU mode';
       const usage = state.contrib.mode === 'gpu'
-        ? 'full power'
+        ? `${getGpuThreadSelection().selected} threads`
         : `${getCpuCoreSelection().selected}/${getCpuCoreSelection().total} cores`;
       if (els.contribRateSub) {
         els.contribRateSub.textContent = `${modeLabel} at ${usage}.`;
@@ -3429,18 +3493,19 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       const usage = Math.max(0, Math.min(100, Math.round(state.contrib.actualUsage || 0)));
       const modeLabel = state.contrib.mode === 'gpu' ? 'GPU' : 'CPU';
       const coreSel = getCpuCoreSelection();
+      const gpuSel = getGpuThreadSelection();
       const target = state.contrib.mode === 'gpu'
-        ? 'full power'
+        ? `${gpuSel.selected}/${gpuSel.max} threads`
         : `${coreSel.selected}/${coreSel.total} cores`;
       if (els.contribUsage) els.contribUsage.textContent = state.contrib.mode === 'gpu'
-        ? `${usage}%`
+        ? `${gpuSel.selected} threads`
         : `${coreSel.selected} cores`;
       if (els.contribUsageSub) {
         els.contribUsageSub.textContent = `${modeLabel} target ${target}, measured from the last active compute window.`;
       }
       if (els.contribUsageMeter) els.contribUsageMeter.style.width = `${usage}%`;
       if (els.contribFloatUsage) els.contribFloatUsage.textContent = state.contrib.mode === 'gpu'
-        ? `${usage}%`
+        ? `${gpuSel.selected} threads`
         : `${coreSel.selected} cores`;
       if (els.contribFloatUsageSub) {
         els.contribFloatUsageSub.textContent = `${modeLabel} target ${target}`;
@@ -3489,12 +3554,18 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       const coreSel = getCpuCoreSelection();
       state.contrib.cpuCoreCount = coreSel.reported;
       state.contrib.cpuCores = coreSel.selected;
-      state.contrib.gpuUsage = 100;
+      const requestedGpuThreads = Number(els.contribGpuThreads?.value);
+      if (Number.isFinite(requestedGpuThreads) && requestedGpuThreads >= 256) {
+        state.contrib.gpuThreads = requestedGpuThreads;
+      }
+      const gpuSel = getGpuThreadSelection();
+      state.contrib.gpuUsage = gpuSel.selected;
       const baseChunk = Math.max(1, Number(els.contribChunk?.value) || 20000000);
       state.contrib.chunkSize = Math.max(1000000, baseChunk);
-      state.contrib.gpuBatchSize = Math.max(1048576, Math.min(33554432, Math.round(baseChunk * 4)));
+      state.contrib.gpuBatchSize = Math.max(256, Math.min(gpuSel.max, Math.round(gpuSel.selected)));
       state.contrib.reportEveryMs = Math.max(250, Number(els.contribInterval?.value) || 1000);
       syncCpuCoreUi();
+      syncGpuThreadsUi();
       syncGpuBackendUi();
       
       const gpuBackendField = document.getElementById('gpuBackendField');
@@ -3529,6 +3600,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       state.contrib.socket = null;
       state.contrib.connected = false;
       state.contrib.rate = 0;
+      state.contrib.lastReportedTotal = 0;
       state.contrib.gpuReadbackQueue = Promise.resolve();
       if (state.contrib.gpuPersist) {
         try {
@@ -3552,17 +3624,20 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         Number(state.contrib.total || 0) || 0,
         Number(state.contrib.cursor || 0n) || 0
       );
+      const processed = Math.max(0, totalDone - Number(state.contrib.lastReportedTotal || 0));
       const payload = {
         type: 'result',
         seed: String(state.contrib.seed),
         total_done: totalDone,
+        processed,
         best_correct: Number(best.best_correct ?? -1),
         best_arr: bestArr,
         best_index: Number(best.best_index ?? 0)
       };
       socket.send(JSON.stringify(payload));
+      state.contrib.lastReportedTotal = totalDone;
       state.contrib.lastReportAt = performance.now();
-      appendContribLog(`sent result: total=${payload.total_done}, best=${payload.best_correct}, index=${payload.best_index}`);
+      appendContribLog(`credited: +${processed} shuffles sent, total=${payload.total_done}, best=${payload.best_correct}, index=${payload.best_index}`);
     }
 
     // ── Benchmark helpers ──────────────────────────────────────────
@@ -3573,7 +3648,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         chunkSize: Math.max(1, Number(state.contrib.chunkSize) || 20000000),
         cpuCores: Math.max(1, Number(coreSel.selected) || 1),
         cpuCoreCount: Math.max(1, Number(coreSel.reported) || 1),
-        gpuBatchSize: Math.max(1048576, Number(state.contrib.gpuBatchSize) || Math.max(1048576, Number(state.contrib.chunkSize) || 20000000)),
+        gpuBatchSize: Math.max(256, Math.min(65536, Number(state.contrib.gpuBatchSize) || Math.max(256, Number(state.contrib.gpuThreads) || 256))),
+        gpuThreads: Math.max(256, Math.min(65536, Number(state.contrib.gpuThreads) || 256)),
         mode: state.contrib.mode,
         gpuBackend: state.contrib.gpuBackend,
         reportEveryMs: Math.max(250, Number(state.contrib.reportEveryMs) || 1000)
@@ -3705,9 +3781,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       const tflopsStr = tfloPs >= 0.001 ? `${tfloPs.toFixed(4)} TFLOPS` : `${(tfloPs * 1000).toFixed(3)} GFLOPS`;
       if (result) result.textContent = `~${formatAbsInt(rate)} shuffles/s · ${tflopsStr}`;
       if (btn) { btn.disabled = false; btn.textContent = 'Benchmark GPU'; }
-      const recommended = Math.max(1048576, Math.min(67108864, Math.round(rate)));
-      if (els.contribChunk) { els.contribChunk.value = String(recommended); contribApplySettings(); }
-      appendContribLog(`GPU benchmark: ${formatAbsInt(rate)} sh/s (${tflopsStr}) → chunk set to ${formatAbsInt(recommended)} using the current GPU settings`);
+      appendContribLog(`GPU benchmark: ${formatAbsInt(rate)} sh/s (${tflopsStr}) — slider left unchanged`);
     }
 
     // ── Core compute: CPU tight-loop with real duty-cycle control ──
@@ -3740,7 +3814,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       const start = Number(state.contrib.cursor);
       const rawLimit = Number(state.contrib.count);
       const batchSize = state.contrib.mode === 'gpu'
-        ? Math.max(1048576, state.contrib.gpuBatchSize || 1048576)
+        ? Math.max(256, state.contrib.gpuBatchSize || state.contrib.gpuThreads || 256)
         : Math.max(1000000, state.contrib.chunkSize || 1000000);
       const end = Math.min(rawLimit, start + batchSize);
       if (end <= start) return;
@@ -3794,6 +3868,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       state.contrib.cursor = 0n;
       state.contrib.seed = null;
       state.contrib.lastReportAt = 0;
+      state.contrib.lastReportedTotal = 0;
       state.contrib.log = [];
       state.contrib.rate = 0;
       state.contrib.actualUsage = 0;
@@ -3927,7 +4002,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
                 const gStart = performance.now();
                 const limit = Number(state.contrib.count);
                 const start = Number(state.contrib.cursor);
-                const batchSize = Math.min(limit - start, Math.max(1048576, state.contrib.gpuBatchSize || 1048576));
+                const batchSize = Math.min(limit - start, Math.max(256, Math.min(getGpuThreadSelection().max, state.contrib.gpuBatchSize || state.contrib.gpuThreads || 256)));
                 if (batchSize <= 0) break;
 
                 const best = await runGpuRange(state.contrib.seed, start, start + batchSize);
@@ -4311,7 +4386,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     els.contribStartBtn.addEventListener('click', contribStart);
     els.contribStopBtn.addEventListener('click', contribStop);
     if (els.contribFloatStopBtn) els.contribFloatStopBtn.addEventListener('click', contribStop);
-    [els.contribWsUrl, els.contribUuid, els.contribNick, els.contribCode, els.contribMode, els.contribGpuBackend, els.contribChunk, els.contribInterval].forEach(input => {
+    [els.contribWsUrl, els.contribUuid, els.contribNick, els.contribCode, els.contribMode, els.contribGpuBackend, els.contribGpuThreads, els.contribChunk, els.contribInterval].forEach(input => {
       if (!input) return;
       input.addEventListener('change', contribApplySettings);
       input.addEventListener('input', contribApplySettings);
@@ -4319,6 +4394,10 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (els.contribCpuCores) {
       els.contribCpuCores.addEventListener('input', contribApplySettings);
       els.contribCpuCores.addEventListener('change', contribApplySettings);
+    }
+    if (els.contribGpuThreads) {
+      els.contribGpuThreads.addEventListener('input', contribApplySettings);
+      els.contribGpuThreads.addEventListener('change', contribApplySettings);
     }
     if (els.contribGpuUsage) {
       els.contribGpuUsage.addEventListener('input', contribApplySettings);
@@ -4349,6 +4428,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       loadSettings();
       syncSettingsControls();
       contribApplySettings();
+      syncGpuThreadsUi();
+      primeGpuThreadSlider();
       syncLeaderboardFiltersFromInputs();
       syncLeaderboardFilterUi();
       renderContribPreview();
