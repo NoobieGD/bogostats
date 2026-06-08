@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bogostats beta-v1.5</title>
+  <title>bogostats beta-v1.5.1</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -451,7 +451,7 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
     <div class="topbar">
       <div class="brand">
         <h1><span class="brand-bogo">bogo</span><span class="brand-stats">stats.</span></h1>
-        <p class="version">beta-v1.5</p>
+        <p class="version">beta-v1.5.1</p>
         <p class="brand-desc">25 elements, being checked by an api and websocket.</p>
       </div>
       <div class="top-actions">
@@ -615,11 +615,11 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
                 <button class="btn" id="contribStartBtn" type="button">Start client</button>
                 <button class="btn" id="contribStopBtn" type="button">Stop</button>
                 <button class="btn" id="contribDisableDisplayBtn" type="button">Disable display</button>
-                <button class="btn" id="downloadContributorBtn" type="button">Download bogostats contributor</button>
+                <button class="btn" id="downloadContributorBtn" type="button">Visit bogostats contributor</button>
               </div>
               <div class="small-note" style="margin-top:12px;">
                 Required inputs: <strong>UUID</strong>, <strong>nickname</strong>, and <strong>recovery code</strong>. CPU mode runs the exact JavaScript shuffler across a worker pool sized by the core slider. GPU mode uses WebGPU when the browser supports it, and falls back to CPU if it does not. Both paths follow the validated shuffle rules from the bogosort client source.
-                The download button saves <code>bogostats_contributor.html</code> from the project repository.
+                The visit button opens the bogostats contributor site in a new tab.
               </div>
             </div>
             <div class="mini">
@@ -2966,37 +2966,28 @@ body[data-font="mono"]{--page-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Cons
       state.contrib.cpuWorkerRates = [];
     }
 
-    async function downloadBogostatsContributorFile() {
-      const sourceUrl = 'https://raw.githubusercontent.com/NoobieGD/bogostats/main/bogostats_contributor.html';
-      const filename = 'bogostats_contributor.html';
+    function downloadBogostatsContributorFile() {
+      const visitUrl = 'https://noobiegd.github.io/bogostats-contributor/';
       const prevLabel = els.downloadContributorBtn ? els.downloadContributorBtn.textContent : '';
 
       if (els.downloadContributorBtn) {
         els.downloadContributorBtn.disabled = true;
-        els.downloadContributorBtn.textContent = 'Preparing download…';
+        els.downloadContributorBtn.textContent = 'Opening contributor site…';
       }
 
       try {
-        const response = await fetch(sourceUrl, { cache: 'no-store' });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.rel = 'noopener';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 2000);
-        logContrib('Downloaded bogostats_contributor.html');
+        const opened = window.open(visitUrl, '_blank', 'noopener');
+        if (!opened) {
+          window.location.assign(visitUrl);
+        }
+        logContrib('Opened bogostats contributor.');
       } catch (error) {
-        logContrib(`Download failed: ${error?.message || error}`);
-        window.open(sourceUrl, '_blank', 'noopener');
+        logContrib(`Open failed: ${error?.message || error}`);
+        window.location.assign(visitUrl);
       } finally {
         if (els.downloadContributorBtn) {
           els.downloadContributorBtn.disabled = false;
-          els.downloadContributorBtn.textContent = prevLabel || 'Download bogostats contributor';
+          els.downloadContributorBtn.textContent = prevLabel || 'Visit bogostats contributor';
         }
       }
     }
