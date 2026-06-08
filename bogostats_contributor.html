@@ -248,6 +248,13 @@
     gpuBusy: false,
     gpuUiTimer: 0,
     uiTimer: 0,
+    sendTimer: 0,
+    wsReconnectTimer: 0,
+    wsReconnectDelay: 1000,
+    wsConnectInFlight: false,
+    pendingSend: 0,
+    pendingBestScore: 0,
+    pendingBestArr: null,
     uiTick: 0,
     batchTarget: 25000,
     gpuBurstLimit: 4,
@@ -424,38 +431,93 @@
     state.gpuBusy = false;
   }
 
+  function scheduleWsReconnect() {
+    if (!state.running || !state.sendEnabled) return;
+    if (state.wsReconnectTimer) return;
+    const delay = Math.max(250, Math.min(5000, state.wsReconnectDelay | 0));
+    state.wsReconnectTimer = setTimeout(() => {
+      state.wsReconnectTimer = 0;
+      if (!state.running || !state.sendEnabled) return;
+      connectWs();
+      state.wsReconnectDelay = Math.min(5000, (state.wsReconnectDelay || 1000) * 2);
+    }, delay);
+  }
+
   function cleanupAll() {
     cleanupCpu();
     cleanupGpu();
+    if (state.sendTimer) {
+      clearInterval(state.sendTimer);
+      state.sendTimer = 0;
+    }
+    if (state.wsReconnectTimer) {
+      clearTimeout(state.wsReconnectTimer);
+      state.wsReconnectTimer = 0;
+    }
+    state.wsConnectInFlight = false;
+    state.wsReconnectDelay = 1000;
     if (state.ws) {
-      try { state.ws.close(); } catch {}
+      try {
+        if (state.ws.readyState === WebSocket.OPEN || state.ws.readyState === WebSocket.CLOSING) {
+          state.ws.close();
+        }
+      } catch {}
       state.ws = null;
+    }
+  }
+
+  function flushPendingSend() {
+    if (!state.sendEnabled) return;
+    const delta = state.pendingSend | 0;
+    if (!delta) return;
+
+    if (!state.ws || state.ws.readyState !== WebSocket.OPEN) {
+      scheduleWsReconnect();
+      return;
+    }
+
+    const bestScore = state.pendingBestScore | 0;
+    const bestArr = Array.isArray(state.pendingBestArr) ? state.pendingBestArr.slice() : null;
+
+    state.pendingSend = 0;
+    state.pendingBestScore = 0;
+    state.pendingBestArr = null;
+
+    try {
+      state.ws.send(JSON.stringify({
+        type: 'shuffles',
+        uuid: el.uuidInput.value.trim(),
+        loginCode: el.loginCodeInput.value.trim(),
+        nickname: el.nicknameInput.value.trim(),
+        count: delta,
+        bestScore,
+        score: bestScore,
+        seed: Number(el.seedInput.value) >>> 0,
+        mode: state.mode,
+        api: state.mode === 'gpu' ? 'webgpu' : 'cpu',
+        bestArr
+      }));
+      state.sent += delta;
+      state.credited += delta;
+    } catch {
+      state.pendingSend += delta;
+      if (bestScore >= state.pendingBestScore) {
+        state.pendingBestScore = bestScore;
+        state.pendingBestArr = bestArr;
+      }
+      scheduleWsReconnect();
     }
   }
 
   function sendBatch(delta, bestScore = 0, bestArr = null) {
     state.total += delta;
     if (state.mode !== 'gpu' && bestArr && bestArr.length) updateBestVisuals(bestScore, bestArr);
-    if (state.sendEnabled && state.ws && state.ws.readyState === WebSocket.OPEN) {
-      try {
-        state.ws.send(JSON.stringify({
-          type: 'shuffles',
-          uuid: el.uuidInput.value.trim(),
-          loginCode: el.loginCodeInput.value.trim(),
-          nickname: el.nicknameInput.value.trim(),
-          count: delta,
-          bestScore,
-          score: bestScore,
-          seed: Number(el.seedInput.value) >>> 0,
-          mode: state.mode,
-          api: state.mode === 'gpu' ? 'webgpu' : 'cpu'
-        }));
-        state.sent += delta;
-        state.credited += delta;
-      } catch {}
-    } else if (state.sendEnabled) {
-      state.sent += delta;
-      state.credited += delta;
+    if (state.sendEnabled) {
+      state.pendingSend += delta;
+      if (bestScore >= state.pendingBestScore) {
+        state.pendingBestScore = bestScore;
+        state.pendingBestArr = Array.isArray(bestArr) ? bestArr.slice() : null;
+      }
     }
     if (state.mode !== 'gpu') updateUI();
   }
@@ -699,26 +761,8 @@ async function initGpu() {
         state.gpu.pendingDelta = 0;
         state.gpu.lastFlush = performance.now();
         state.total += delta;
-        if (state.sendEnabled && state.ws && state.ws.readyState === WebSocket.OPEN) {
-          try {
-            state.ws.send(JSON.stringify({
-              type: 'shuffles',
-              uuid: el.uuidInput.value.trim(),
-              loginCode: el.loginCodeInput.value.trim(),
-              nickname: el.nicknameInput.value.trim(),
-              count: delta,
-              bestScore: 0,
-              score: 0,
-              seed: Number(el.seedInput.value) >>> 0,
-              mode: 'gpu',
-              api: 'webgpu'
-            }));
-            state.sent += delta;
-            state.credited += delta;
-          } catch {}
-        } else if (state.sendEnabled) {
-          state.sent += delta;
-          state.credited += delta;
+        if (state.sendEnabled) {
+          state.pendingSend += delta;
         }
         updateUI(false);
       }
@@ -744,22 +788,61 @@ async function initGpu() {
   }
 
   function connectWs() {
-
-    if (!state.sendEnabled) return;
+    if (!state.sendEnabled || !state.running) return;
     const url = el.serverWs.value.trim();
     if (!url) return;
+
+    if (state.wsConnectInFlight) return;
+    if (state.ws && (state.ws.readyState === WebSocket.OPEN || state.ws.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
+
+    state.wsConnectInFlight = true;
     try {
-      if (state.ws) try { state.ws.close(); } catch {}
+      if (state.ws) {
+        try {
+          if (state.ws.readyState === WebSocket.OPEN || state.ws.readyState === WebSocket.CLOSING) {
+            state.ws.close();
+          }
+        } catch {}
+      }
       const ws = new WebSocket(url);
       state.ws = ws;
       setConn('warn', 'Connecting…');
-      ws.onopen = () => { state.wsConnected = true; setConn('ok', 'Connected'); setState('Running', 'Connected to swapjs.dev'); };
-      ws.onclose = () => { state.wsConnected = false; setConn('warn', 'Disconnected'); };
-      ws.onerror = () => { state.wsConnected = false; setConn('bad', 'Websocket error'); };
-      ws.onmessage = () => { state.credited = Math.max(state.credited, state.sent); if (state.mode !== 'gpu') updateUI(true); };
+
+      ws.onopen = () => {
+        state.wsConnectInFlight = false;
+        state.wsConnected = true;
+        state.wsReconnectDelay = 1000;
+        setConn('ok', 'Connected');
+        setState('Running', 'Connected to swapjs.dev');
+        flushPendingSend();
+      };
+
+      ws.onclose = () => {
+        state.wsConnectInFlight = false;
+        state.wsConnected = false;
+        if (state.ws === ws) state.ws = null;
+        setConn('warn', 'Disconnected');
+        scheduleWsReconnect();
+      };
+
+      ws.onerror = () => {
+        state.wsConnectInFlight = false;
+        state.wsConnected = false;
+        setConn('bad', 'Websocket error');
+        scheduleWsReconnect();
+      };
+
+      ws.onmessage = () => {
+        state.credited = Math.max(state.credited, state.sent);
+        if (state.mode !== 'gpu') updateUI(true);
+      };
     } catch {
+      state.wsConnectInFlight = false;
       state.wsConnected = false;
       setConn('bad', 'Websocket failed');
+      scheduleWsReconnect();
     }
   }
 
@@ -787,11 +870,16 @@ async function initGpu() {
     state.total = 0; state.sent = 0; state.credited = 0; state.startedAt = performance.now();
     state.rate = 0;
     state.currentSecond = Math.floor((performance.now() - state.startedAt) / 1000);
+    state.wsReconnectDelay = 1000;
+    state.wsConnectInFlight = false;
     refreshBestPanels();
     setConn('warn', 'Starting…');
     syncDisplayMode();
     document.body.classList.toggle('gpu-no-viz', state.mode === 'gpu');
     connectWs();
+    if (state.sendTimer) clearInterval(state.sendTimer);
+    state.sendTimer = setInterval(flushPendingSend, 1000);
+    flushPendingSend();
     if (state.mode === 'cpu') {
       const profile = usageProfiles[state.usage];
       const workers = Math.max(1, Math.min(384, Math.round(hardware * profile.cpu)));
@@ -864,7 +952,20 @@ async function initGpu() {
       el.sendToggle.classList.toggle('on', state.sendEnabled);
       el.sendToggle.setAttribute('aria-pressed', String(state.sendEnabled));
       el.sendToggleLabel.textContent = state.sendEnabled ? 'Send shuffles' : 'Do not send';
-      if (!state.sendEnabled && state.ws) { try { state.ws.close(); } catch {} }
+      if (!state.sendEnabled) {
+        state.pendingSend = 0;
+        state.pendingBestScore = 0;
+        state.pendingBestArr = null;
+        if (state.wsReconnectTimer) { clearTimeout(state.wsReconnectTimer); state.wsReconnectTimer = 0; }
+        state.wsReconnectDelay = 1000;
+        if (state.ws) {
+          try {
+            if (state.ws.readyState === WebSocket.OPEN || state.ws.readyState === WebSocket.CLOSING) {
+              state.ws.close();
+            }
+          } catch {}
+        }
+      }
       setConn(state.sendEnabled ? 'warn' : 'warn', state.sendEnabled ? 'Sending enabled' : 'Local only');
     });
     el.startBtn.addEventListener('click', start);
